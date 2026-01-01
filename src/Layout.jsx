@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -12,9 +12,11 @@ import {
   History, 
   Info, 
   Lock,
-  Shield
+  Activity,
+  LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { base44 } from "@/api/base44Client";
 
 const navItems = [
   { name: "Home", icon: Home, page: "Home" },
@@ -27,6 +29,9 @@ const navItems = [
 export default function Layout({ children, currentPageName }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("skinaid-theme");
@@ -36,6 +41,19 @@ export default function Layout({ children, currentPageName }) {
       setIsDark(true);
       document.documentElement.classList.add("dark");
     }
+
+    // Check authentication
+    const checkAuth = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+      } catch (err) {
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    checkAuth();
   }, []);
 
   const toggleTheme = () => {
@@ -49,6 +67,19 @@ export default function Layout({ children, currentPageName }) {
     }
   };
 
+  const handleLogin = () => {
+    base44.auth.redirectToLogin(createPageUrl("SkinCheck"));
+  };
+
+  const handleLogout = () => {
+    base44.auth.logout();
+  };
+
+  // Show loading state while checking auth
+  if (isLoading) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-white dark:bg-slate-900 transition-colors">
       {/* Header */}
@@ -61,7 +92,7 @@ export default function Layout({ children, currentPageName }) {
               className="flex items-center gap-2"
             >
               <div className="w-9 h-9 bg-gradient-to-br from-[#1E5EFF] to-[#1CB5A3] rounded-xl flex items-center justify-center">
-                <Shield className="w-5 h-5 text-white" />
+                <Activity className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold text-slate-900 dark:text-white">
                 SkinAid
@@ -69,21 +100,36 @@ export default function Layout({ children, currentPageName }) {
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center gap-1">
-              {navItems.map((item) => (
+            {user ? (
+              <nav className="hidden md:flex items-center gap-1">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.page}
+                    to={createPageUrl(item.page)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      currentPageName === item.page
+                        ? "bg-[#1E5EFF]/10 text-[#1E5EFF]"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+              </nav>
+            ) : (
+              <nav className="hidden md:flex items-center gap-1">
                 <Link
-                  key={item.page}
-                  to={createPageUrl(item.page)}
+                  to={createPageUrl("Home")}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    currentPageName === item.page
+                    currentPageName === "Home"
                       ? "bg-[#1E5EFF]/10 text-[#1E5EFF]"
                       : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                   }`}
                 >
-                  {item.name}
+                  Home
                 </Link>
-              ))}
-            </nav>
+              </nav>
+            )}
 
             {/* Actions */}
             <div className="flex items-center gap-2">
@@ -99,15 +145,35 @@ export default function Layout({ children, currentPageName }) {
                   <Moon className="w-5 h-5 text-slate-600" />
                 )}
               </Button>
-              
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsMenuOpen(true)}
-                className="md:hidden rounded-lg"
-              >
-                <Menu className="w-5 h-5" />
-              </Button>
+
+              {user ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleLogout}
+                    className="hidden md:flex rounded-lg"
+                    title="Logout"
+                  >
+                    <LogOut className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsMenuOpen(true)}
+                    className="md:hidden rounded-lg"
+                  >
+                    <Menu className="w-5 h-5" />
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  onClick={handleLogin}
+                  className="bg-[#1E5EFF] hover:bg-[#1a52e0] text-white text-sm px-4 py-2 rounded-lg"
+                >
+                  Sign In
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -115,7 +181,7 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Mobile Menu */}
       <AnimatePresence>
-        {isMenuOpen && (
+        {isMenuOpen && user && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
@@ -158,6 +224,14 @@ export default function Layout({ children, currentPageName }) {
                     {item.name}
                   </Link>
                 ))}
+                <Button
+                  onClick={handleLogout}
+                  variant="ghost"
+                  className="w-full justify-start px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  <LogOut className="w-5 h-5 mr-3" />
+                  Logout
+                </Button>
               </nav>
             </motion.div>
           </>
@@ -177,7 +251,7 @@ export default function Layout({ children, currentPageName }) {
             <div className="md:col-span-2">
               <Link to={createPageUrl("Home")} className="flex items-center gap-2 mb-4">
                 <div className="w-9 h-9 bg-gradient-to-br from-[#1E5EFF] to-[#1CB5A3] rounded-xl flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-white" />
+                  <Activity className="w-5 h-5 text-white" />
                 </div>
                 <span className="text-xl font-bold text-slate-900 dark:text-white">
                   SkinAid
