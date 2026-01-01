@@ -60,14 +60,6 @@ export default function History() {
     );
   }
 
-  const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.SkinAnalysis.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["skin-analyses"] });
-      setDeleteId(null);
-    }
-  });
-
   const handleDownload = (analysis) => {
     const htmlReport = `
 <!DOCTYPE html>
