@@ -24,6 +24,13 @@ export default function History() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const queryClient = useQueryClient();
 
+  const { data: analyses, isLoading, error } = useQuery({
+    queryKey: ["skin-analyses"],
+    queryFn: () => base44.entities.SkinAnalysis.list("-created_date", 50),
+    initialData: [],
+    enabled: !isCheckingAuth
+  });
+
   // Check authentication on mount
   React.useEffect(() => {
     const checkAuth = async () => {
@@ -44,12 +51,6 @@ export default function History() {
       </div>
     );
   }
-
-  const { data: analyses, isLoading, error } = useQuery({
-    queryKey: ["skin-analyses"],
-    queryFn: () => base44.entities.SkinAnalysis.list("-created_date", 50),
-    initialData: []
-  });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.SkinAnalysis.delete(id),
