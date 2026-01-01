@@ -1,12 +1,13 @@
-import React, { useCallback, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Upload, Image, X, Camera, AlertCircle } from "lucide-react";
+import React, { useCallback, useState, useRef } from "react";
+import { motion } from "framer-motion";
+import { Upload, X, Camera, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export default function ImageUploader({ onImageSelect, selectedImage, onClear }) {
+export default function ImageUploader({ selectedImages = [], onImagesSelect, onClear }) {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
 
   const validateFile = (file) => {
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -83,9 +84,12 @@ export default function ImageUploader({ onImageSelect, selectedImage, onClear })
   const handleDrop = useCallback((e) => {
     e.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
-  }, [handleFile]);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      handleFiles(files);
+    }
+  }, [handleFiles]);
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
@@ -97,129 +101,113 @@ export default function ImageUploader({ onImageSelect, selectedImage, onClear })
     setIsDragging(false);
   }, []);
 
-  const handleInputChange = (e) => {
-    const file = e.target.files[0];
-    if (file) handleFile(file);
+  const handleInputChange = useCallback((e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      handleFiles(files);
+    }
+  }, [handleFiles]);
+
+  const removeImage = (index) => {
+    const newImages = selectedImages.filter((_, i) => i !== index);
+    onImagesSelect(newImages);
   };
 
   return (
-    <div className="w-full">
-      <AnimatePresence mode="wait">
-        {!selectedImage ? (
-          <motion.div
-            key="upload"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <div
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              className={cn(
-                "relative border-2 border-dashed rounded-2xl p-12 transition-all duration-300 cursor-pointer",
-                isDragging
-                  ? "border-[#1E5EFF] bg-[#1E5EFF]/5"
-                  : "border-slate-300 dark:border-slate-600 hover:border-[#1CB5A3] hover:bg-slate-50 dark:hover:bg-slate-800/50"
-              )}
-            >
-              <input
-                type="file"
-                accept="image/jpeg,image/jpg,image/png,image/webp"
-                onChange={handleInputChange}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
-              
-              <div className="flex flex-col items-center text-center">
-                <div className={cn(
-                  "w-20 h-20 rounded-2xl flex items-center justify-center mb-6 transition-colors",
-                  isDragging 
-                    ? "bg-[#1E5EFF]/10" 
-                    : "bg-slate-100 dark:bg-slate-800"
-                )}>
-                  <Upload className={cn(
-                    "w-10 h-10 transition-colors",
-                    isDragging ? "text-[#1E5EFF]" : "text-slate-400"
-                  )} />
-                </div>
-                
-                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
-                  Upload your image
-                </h3>
-                <p className="text-slate-500 dark:text-slate-400 mb-6">
-                  Drag and drop or click to browse
-                </p>
-                
-                <div className="flex flex-wrap justify-center gap-2 text-xs text-slate-400">
-                  <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded">JPG</span>
-                  <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded">PNG</span>
-                  <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded">WebP</span>
-                  <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded">Max 10MB</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Tips */}
-            <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
-              <div className="flex items-start gap-3">
-                <Camera className="w-5 h-5 text-[#1CB5A3] flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-medium text-slate-900 dark:text-white text-sm mb-1">
-                    Tips for best results
-                  </p>
-                  <ul className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
-                    <li>• Use good lighting (natural light works best)</li>
-                    <li>• Keep the camera steady and focused</li>
-                    <li>• Capture the affected area clearly</li>
-                    <li>• Include some surrounding skin for context</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="preview"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="relative"
-          >
-            <div className="relative rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800">
-              <img
-                src={URL.createObjectURL(selectedImage)}
-                alt="Selected skin image"
-                className="w-full h-auto max-h-[400px] object-contain"
-              />
-              <Button
-                size="icon"
-                variant="secondary"
-                onClick={onClear}
-                className="absolute top-4 right-4 rounded-full bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-800 shadow-lg"
-              >
-                <X className="w-4 h-4" />
-              </Button>
+    <div className="space-y-3">
+      {selectedImages.length === 0 ? (
+        <div
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onClick={() => fileInputRef.current?.click()}
+          className={cn(
+            "relative border-2 border-dashed rounded-2xl p-8 transition-all cursor-pointer",
+            isDragging
+              ? "border-[#1E5EFF] bg-[#1E5EFF]/5"
+              : "border-slate-300 dark:border-slate-600 hover:border-[#1CB5A3]"
+          )}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleInputChange}
+            className="hidden"
+          />
+          
+          <div className="flex flex-col items-center text-center">
+            <div className={cn(
+              "w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors",
+              isDragging ? "bg-[#1E5EFF]/10" : "bg-slate-100 dark:bg-slate-800"
+            )}>
+              <Upload className={cn(
+                "w-8 h-8 transition-colors",
+                isDragging ? "text-[#1E5EFF]" : "text-slate-400"
+              )} />
             </div>
             
-            <div className="mt-4 flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
-              <div className="flex items-center gap-3">
-                <Image className="w-5 h-5 text-slate-400" />
-                <div>
-                  <p className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-[200px]">
-                    {selectedImage.name}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {(selectedImage.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                </div>
-              </div>
-              <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 rounded">
-                Ready
-              </span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Click to upload or drag and drop
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              PNG, JPG, or WebP (max 10MB) • Multiple images allowed
+            </p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+              ⚠️ Upload images of the same subject only
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            {selectedImages.map((image, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="relative"
+              >
+                <img
+                  src={URL.createObjectURL(image)}
+                  alt={`Selected ${index + 1}`}
+                  className="w-full h-32 object-cover rounded-xl border-2 border-slate-200 dark:border-slate-700"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  onClick={() => removeImage(index)}
+                  className="absolute top-2 right-2 rounded-full shadow-lg h-7 w-7"
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              </motion.div>
+            ))}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Add More Images
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleInputChange}
+            className="hidden"
+          />
+          <p className="text-xs text-center text-amber-600 dark:text-amber-400">
+            ⚠️ Ensure all images are of the same subject
+          </p>
+        </div>
+      )}
 
       {error && (
         <motion.div
