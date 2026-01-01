@@ -9,11 +9,11 @@ export default function ImageUploader({ onImageSelect, selectedImage, onClear })
   const [error, setError] = useState(null);
 
   const validateFile = (file) => {
-    const validTypes = ["image/jpeg", "image/jpg", "image/png"];
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     const maxSize = 10 * 1024 * 1024; // 10MB
 
     if (!validTypes.includes(file.type)) {
-      return "Please upload a JPG or PNG image";
+      return "Please upload a JPG, PNG, or WebP image";
     }
     if (file.size > maxSize) {
       return "Image must be less than 10MB";
@@ -76,7 +76,7 @@ export default function ImageUploader({ onImageSelect, selectedImage, onClear })
             >
               <input
                 type="file"
-                accept="image/jpeg,image/jpg,image/png"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
                 onChange={handleInputChange}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
@@ -104,6 +104,7 @@ export default function ImageUploader({ onImageSelect, selectedImage, onClear })
                 <div className="flex flex-wrap justify-center gap-2 text-xs text-slate-400">
                   <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded">JPG</span>
                   <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded">PNG</span>
+                  <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded">WebP</span>
                   <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded">Max 10MB</span>
                 </div>
               </div>
