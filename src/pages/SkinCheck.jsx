@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Scan, RefreshCw, ArrowLeft } from "lucide-react";
+import { Scan, RefreshCw, ArrowLeft, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import ImageUploader from "@/components/skincheck/ImageUploader";
@@ -99,6 +99,8 @@ Be calm, reassuring, and educational. Never claim to diagnose. Always recommend 
         }
       });
       
+      console.log("Analysis result:", analysisResult);
+      
       await new Promise(r => setTimeout(r, 500));
       
       // Step 4: Generate
@@ -106,12 +108,14 @@ Be calm, reassuring, and educational. Never claim to diagnose. Always recommend 
       await new Promise(r => setTimeout(r, 800));
       
       setResults(analysisResult);
+      setIsAnalyzing(false);
+      setCurrentStep(null);
     } catch (err) {
-      setError("Analysis failed. Please try again with a clearer image.");
+      console.error("Analysis error:", err);
+      setError(err.message || "Analysis failed. Please try again with a clearer image.");
+      setIsAnalyzing(false);
+      setCurrentStep(null);
     }
-    
-    setIsAnalyzing(false);
-    setCurrentStep(null);
   };
 
   const handleSave = async () => {
@@ -286,7 +290,31 @@ For more information, visit our About page.
           {/* Right Panel - Results */}
           <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-700 shadow-sm">
             <AnimatePresence mode="wait">
-              {results ? (
+              {error && !isAnalyzing ? (
+                <motion.div
+                  key="error"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="h-full flex flex-col items-center justify-center text-center py-16"
+                >
+                  <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mb-6">
+                    <AlertCircle className="w-10 h-10 text-red-500" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+                    Analysis Error
+                  </h3>
+                  <p className="text-slate-500 dark:text-slate-400 max-w-sm mb-6">
+                    {error}
+                  </p>
+                  <Button
+                    onClick={() => setError(null)}
+                    variant="outline"
+                  >
+                    Try Again
+                  </Button>
+                </motion.div>
+              ) : results ? (
                 <ResultsPanel
                   results={results}
                   onSave={handleSave}
