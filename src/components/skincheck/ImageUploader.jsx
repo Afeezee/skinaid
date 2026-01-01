@@ -21,14 +21,56 @@ export default function ImageUploader({ onImageSelect, selectedImage, onClear })
     return null;
   };
 
-  const handleFile = useCallback((file) => {
+  const convertWebPToJPG = async (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const convertedFile = new File([blob], file.name.replace(/\.webp$/i, '.jpg'), {
+                type: 'image/jpeg',
+                lastModified: Date.now()
+              });
+              resolve(convertedFile);
+            } else {
+              reject(new Error('Failed to convert image'));
+            }
+          }, 'image/jpeg', 0.92);
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = e.target.result;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFile = useCallback(async (file) => {
     setError(null);
     const validationError = validateFile(file);
     if (validationError) {
       setError(validationError);
       return;
     }
-    onImageSelect(file);
+    
+    // Convert WebP to JPG
+    if (file.type === 'image/webp') {
+      try {
+        const convertedFile = await convertWebPToJPG(file);
+        onImageSelect(convertedFile);
+      } catch (err) {
+        setError('Failed to convert WebP image. Please try a different format.');
+      }
+    } else {
+      onImageSelect(file);
+    }
   }, [onImageSelect]);
 
   const handleDrop = useCallback((e) => {

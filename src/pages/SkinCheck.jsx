@@ -9,17 +9,20 @@ import ImageUploader from "@/components/skincheck/ImageUploader";
 import SubjectSelector from "@/components/skincheck/SubjectSelector";
 import AnalysisProgress from "@/components/ui/AnalysisProgress";
 import ResultsPanel from "@/components/skincheck/ResultsPanel";
+import RatingWidget from "@/components/skincheck/RatingWidget";
 import Disclaimer from "@/components/ui/Disclaimer";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function SkinCheck() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [subjectType, setSubjectType] = useState("human");
+  const [additionalContext, setAdditionalContext] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentStep, setCurrentStep] = useState(null);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [savedAnalysisId, setSavedAnalysisId] = useState(null);
 
   const handleAnalyze = async () => {
     if (!selectedImage) return;
@@ -55,11 +58,15 @@ export default function SkinCheck() {
       ? "This is a pet (animal) skin image. Provide veterinary-relevant insights."
       : "This is a human skin image. Provide dermatological insights.";
     
+    const contextPrompt = additionalContext 
+      ? `\n\nAdditional context provided by user: ${additionalContext}`
+      : "";
+    
     try {
       const analysisResult = await base44.integrations.Core.InvokeLLM({
         prompt: `You are a skin analysis assistant providing educational insights (NOT medical diagnosis).
         
-${subjectContext}
+${subjectContext}${contextPrompt}
 
 Analyze this skin image and provide:
 1. Possible conditions (2-3 most likely based on visible features)
@@ -108,6 +115,24 @@ Be calm, reassuring, and educational. Never claim to diagnose. Always recommend 
       await new Promise(r => setTimeout(r, 800));
       
       setResults(analysisResult);
+      
+      // Auto-save to history
+      try {
+        const savedAnalysis = await base44.entities.SkinAnalysis.create({
+          image_url: fileUrl,
+          conditions: analysisResult.conditions,
+          severity: analysisResult.severity,
+          observations: analysisResult.observations,
+          recommendations: analysisResult.recommendations,
+          subject_type: subjectType,
+          analysis_date: new Date().toISOString(),
+          user_context: additionalContext || null
+        });
+        setSavedAnalysisId(savedAnalysis.id);
+      } catch (saveErr) {
+        console.error("Failed to auto-save:", saveErr);
+      }
+      
       setIsAnalyzing(false);
       setCurrentStep(null);
     } catch (err) {
@@ -118,25 +143,17 @@ Be calm, reassuring, and educational. Never claim to diagnose. Always recommend 
     }
   };
 
-  const handleSave = async () => {
-    if (!results || !uploadedImageUrl) return;
+  const handleRate = async (ratingData) => {
+    if (!savedAnalysisId) return;
     
-    setIsSaving(true);
     try {
-      await base44.entities.SkinAnalysis.create({
-        image_url: uploadedImageUrl,
-        conditions: results.conditions,
-        severity: results.severity,
-        observations: results.observations,
-        recommendations: results.recommendations,
-        subject_type: subjectType,
-        analysis_date: new Date().toISOString()
+      await base44.entities.SkinAnalysis.update(savedAnalysisId, {
+        rating: ratingData.rating,
+        rating_feedback: ratingData.feedback
       });
-      alert("Analysis saved to your history!");
     } catch (err) {
-      alert("Failed to save. Please try again.");
+      console.error("Failed to save rating:", err);
     }
-    setIsSaving(false);
   };
 
   const handleDownload = () => {
@@ -197,6 +214,8 @@ For more information, visit our About page.
     setResults(null);
     setError(null);
     setUploadedImageUrl(null);
+    setAdditionalContext("");
+    setSavedAnalysisId(null);
   };
 
   return (
@@ -260,6 +279,20 @@ For more information, visit our About page.
                     />
                   </div>
 
+                  {/* Additional Context */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                      Additional Details (Optional)
+                    </label>
+                    <Textarea
+                      placeholder="Add any relevant context: symptoms, duration, changes over time, etc."
+                      value={additionalContext}
+                      onChange={(e) => setAdditionalContext(e.target.value)}
+                      className="resize-none"
+                      rows={3}
+                    />
+                  </div>
+
                   {/* Action Buttons */}
                   <div className="flex gap-3 pt-4">
                     {results ? (
@@ -315,12 +348,16 @@ For more information, visit our About page.
                   </Button>
                 </motion.div>
               ) : results ? (
-                <ResultsPanel
-                  results={results}
-                  onSave={handleSave}
-                  onDownload={handleDownload}
-                  isSaving={isSaving}
-                />
+                <div className="space-y-4">
+                  <ResultsPanel
+                    results={results}
+                    onDownload={handleDownload}
+                  />
+                  <RatingWidget
+                    onRate={handleRate}
+                    analysisId={savedAnalysisId}
+                  />
+                </div>
               ) : (
                 <motion.div
                   key="placeholder"

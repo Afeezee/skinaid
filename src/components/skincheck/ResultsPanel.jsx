@@ -6,14 +6,13 @@ import {
   Lightbulb, 
   Stethoscope,
   ChevronRight,
-  Download,
-  Save
+  Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SeverityBadge from "@/components/ui/SeverityBadge";
 import Disclaimer from "@/components/ui/Disclaimer";
 
-export default function ResultsPanel({ results, onSave, onDownload, isSaving }) {
+export default function ResultsPanel({ results, onDownload }) {
   if (!results) return null;
 
   const { conditions, severity, observations, recommendations } = results;
@@ -127,15 +126,7 @@ export default function ResultsPanel({ results, onSave, onDownload, isSaving }) 
       )}
 
       {/* Actions */}
-      <div className="flex flex-col sm:flex-row gap-3 pt-4">
-        <Button
-          onClick={onSave}
-          disabled={isSaving}
-          className="flex-1 bg-[#1E5EFF] hover:bg-[#1a52e0] text-white"
-        >
-          <Save className="w-4 h-4 mr-2" />
-          {isSaving ? "Saving..." : "Save to History"}
-        </Button>
+      <div className="flex gap-3 pt-4">
         <Button
           onClick={onDownload}
           variant="outline"
