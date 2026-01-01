@@ -52,26 +52,33 @@ export default function ImageUploader({ onImageSelect, selectedImage, onClear })
     });
   };
 
-  const handleFile = useCallback(async (file) => {
+  const handleFiles = useCallback(async (files) => {
     setError(null);
-    const validationError = validateFile(file);
-    if (validationError) {
-      setError(validationError);
-      return;
+    const processedFiles = [];
+    
+    for (const file of files) {
+      const validationError = validateFile(file);
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+      
+      // Convert WebP to JPG
+      if (file.type === 'image/webp') {
+        try {
+          const convertedFile = await convertWebPToJPG(file);
+          processedFiles.push(convertedFile);
+        } catch (err) {
+          setError('Failed to convert WebP image. Please try a different format.');
+          return;
+        }
+      } else {
+        processedFiles.push(file);
+      }
     }
     
-    // Convert WebP to JPG
-    if (file.type === 'image/webp') {
-      try {
-        const convertedFile = await convertWebPToJPG(file);
-        onImageSelect(convertedFile);
-      } catch (err) {
-        setError('Failed to convert WebP image. Please try a different format.');
-      }
-    } else {
-      onImageSelect(file);
-    }
-  }, [onImageSelect]);
+    onImagesSelect([...selectedImages, ...processedFiles]);
+  }, [onImagesSelect, selectedImages]);
 
   const handleDrop = useCallback((e) => {
     e.preventDefault();

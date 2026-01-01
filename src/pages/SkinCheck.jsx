@@ -14,14 +14,14 @@ import Disclaimer from "@/components/ui/Disclaimer";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function SkinCheck() {
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImages, setSelectedImages] = useState([]);
   const [subjectType, setSubjectType] = useState("human");
   const [additionalContext, setAdditionalContext] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentStep, setCurrentStep] = useState(null);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
   const [savedAnalysisId, setSavedAnalysisId] = useState(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
@@ -48,7 +48,7 @@ export default function SkinCheck() {
   }
 
   const handleAnalyze = async () => {
-    if (!selectedImage) return;
+    if (selectedImages.length === 0) return;
     
     setIsAnalyzing(true);
     setError(null);
@@ -61,13 +61,15 @@ export default function SkinCheck() {
     // Step 2: Secure
     setCurrentStep("secure");
     
-    let fileUrl;
+    const fileUrls = [];
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: selectedImage });
-      fileUrl = file_url;
-      setUploadedImageUrl(file_url);
+      for (const image of selectedImages) {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: image });
+        fileUrls.push(file_url);
+      }
+      setUploadedImageUrls(fileUrls);
     } catch (err) {
-      setError("Failed to upload image. Please try again.");
+      setError("Failed to upload images. Please try again.");
       setIsAnalyzing(false);
       return;
     }
@@ -91,15 +93,17 @@ export default function SkinCheck() {
         
 ${subjectContext}${contextPrompt}
 
-Analyze this skin image and provide:
+${fileUrls.length > 1 ? `You have been provided with ${fileUrls.length} images of the same subject. Analyze all images together to provide a comprehensive assessment.` : ''}
+
+Analyze ${fileUrls.length > 1 ? 'these skin images' : 'this skin image'} and provide:
 1. Possible conditions (2-3 most likely based on visible features)
 2. Visual observations about color, texture, patterns, lesions, inflammation
 3. Severity estimate (low, moderate, or high)
 4. Recommendations for next steps
 
 Be calm, reassuring, and educational. Never claim to diagnose. Always recommend professional consultation for concerning findings.`,
-        file_urls: [fileUrl],
-        response_json_schema: {
+              file_urls: fileUrls,
+              response_json_schema: {
           type: "object",
           properties: {
             conditions: {
@@ -142,7 +146,7 @@ Be calm, reassuring, and educational. Never claim to diagnose. Always recommend 
       // Auto-save to history
       try {
         const savedAnalysis = await base44.entities.SkinAnalysis.create({
-          image_url: fileUrl,
+          image_url: fileUrls[0], // Save first image as primary
           conditions: analysisResult.conditions,
           severity: analysisResult.severity,
           observations: analysisResult.observations,
@@ -180,7 +184,7 @@ Be calm, reassuring, and educational. Never claim to diagnose. Always recommend 
   };
 
   const handleDownload = () => {
-    if (!results) return;
+    if (!results || uploadedImageUrls.length === 0) return;
     
     const htmlReport = `
 <!DOCTYPE html>
@@ -216,10 +220,10 @@ Be calm, reassuring, and educational. Never claim to diagnose. Always recommend 
         Please consult a qualified healthcare professional for any skin concerns.
     </div>
 
-    ${uploadedImageUrl ? `
+    ${uploadedImageUrls.length > 0 ? `
     <div class="image-container">
-        <h2>📸 Analyzed Image</h2>
-        <img src="${uploadedImageUrl}" alt="Skin analysis image" />
+        <h2>📸 Analyzed Image${uploadedImageUrls.length > 1 ? 's' : ''}</h2>
+        ${uploadedImageUrls.map((url, i) => `<img src="${url}" alt="Skin analysis image ${i + 1}" style="margin-bottom: 10px;" />`).join('')}
     </div>
     ` : ''}
 
@@ -268,10 +272,10 @@ Be calm, reassuring, and educational. Never claim to diagnose. Always recommend 
   };
 
   const handleReset = () => {
-    setSelectedImage(null);
+    setSelectedImages([]);
     setResults(null);
     setError(null);
-    setUploadedImageUrl(null);
+    setUploadedImageUrls([]);
     setAdditionalContext("");
     setSavedAnalysisId(null);
   };
@@ -328,12 +332,12 @@ Be calm, reassuring, and educational. Never claim to diagnose. Always recommend 
                   {/* Image Uploader */}
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                      Upload Image
+                      Upload Images
                     </label>
                     <ImageUploader
-                      selectedImage={selectedImage}
-                      onImageSelect={setSelectedImage}
-                      onClear={() => setSelectedImage(null)}
+                      selectedImages={selectedImages}
+                      onImagesSelect={setSelectedImages}
+                      onClear={() => setSelectedImages([])}
                     />
                   </div>
 
@@ -365,11 +369,11 @@ Be calm, reassuring, and educational. Never claim to diagnose. Always recommend 
                     ) : (
                       <Button
                         onClick={handleAnalyze}
-                        disabled={!selectedImage || isAnalyzing}
+                        disabled={selectedImages.length === 0 || isAnalyzing}
                         className="flex-1 bg-[#1E5EFF] hover:bg-[#1a52e0] text-white py-6 text-lg rounded-xl"
                       >
                         <Scan className="w-5 h-5 mr-2" />
-                        Analyze Image
+                        Analyze {selectedImages.length > 1 ? 'Images' : 'Image'}
                       </Button>
                     )}
                   </div>

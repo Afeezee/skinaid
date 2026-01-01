@@ -100,7 +100,7 @@ export default function Layout({ children, currentPageName }) {
             </Link>
 
             {/* Desktop Nav */}
-            {user ? (
+            {user && (
               <nav className="hidden md:flex items-center gap-1">
                 {navItems.map((item) => (
                   <Link
@@ -115,19 +115,6 @@ export default function Layout({ children, currentPageName }) {
                     {item.name}
                   </Link>
                 ))}
-              </nav>
-            ) : (
-              <nav className="hidden md:flex items-center gap-1">
-                <Link
-                  to={createPageUrl("Home")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    currentPageName === "Home"
-                      ? "bg-[#1E5EFF]/10 text-[#1E5EFF]"
-                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                  }`}
-                >
-                  Home
-                </Link>
               </nav>
             )}
 
@@ -305,9 +292,19 @@ export default function Layout({ children, currentPageName }) {
 
           {/* Bottom */}
           <div className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-700 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              © {new Date().getFullYear()} SkinAid. For educational purposes only.
-            </p>
+            <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                © {new Date().getFullYear()} SkinAid.
+              </p>
+              <a 
+                href="https://cereustechnologies.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm font-semibold bg-gradient-to-r from-[#1E5EFF] to-[#1CB5A3] bg-clip-text text-transparent hover:opacity-80 transition-opacity"
+              >
+                By Cereus Technologies
+              </a>
+            </div>
             <p className="text-xs text-slate-400 dark:text-slate-500 text-center md:text-right">
               Not a medical device. Does not provide diagnoses, treatment recommendations, or prescriptions.
             </p>
