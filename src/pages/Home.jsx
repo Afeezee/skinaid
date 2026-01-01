@@ -4,7 +4,7 @@ import HowItWorks from "@/components/landing/HowItWorks";
 import Features from "@/components/landing/Features";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Shield, Lock, AlertCircle } from "lucide-react";
+import { ArrowRight, Activity, Lock, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import Disclaimer from "@/components/ui/Disclaimer";

@@ -21,7 +21,29 @@ import Disclaimer from "@/components/ui/Disclaimer";
 
 export default function History() {
   const [deleteId, setDeleteId] = useState(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const queryClient = useQueryClient();
+
+  // Check authentication on mount
+  React.useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        await base44.auth.me();
+        setIsCheckingAuth(false);
+      } catch (err) {
+        base44.auth.redirectToLogin(createPageUrl("History"));
+      }
+    };
+    checkAuth();
+  }, []);
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+        <div className="text-slate-600 dark:text-slate-400">Loading...</div>
+      </div>
+    );
+  }
 
   const { data: analyses, isLoading, error } = useQuery({
     queryKey: ["skin-analyses"],
@@ -38,51 +60,87 @@ export default function History() {
   });
 
   const handleDownload = (analysis) => {
-    const report = `
-SKINAID ANALYSIS REPORT
-Generated: ${new Date(analysis.analysis_date || analysis.created_date).toLocaleString()}
+    const htmlReport = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>SkinAid Analysis Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }
+        h1 { color: #1E5EFF; border-bottom: 3px solid #1CB5A3; padding-bottom: 10px; }
+        h2 { color: #333; margin-top: 30px; border-left: 4px solid #1E5EFF; padding-left: 10px; }
+        .disclaimer { background: #fff3cd; border: 2px solid #ffc107; padding: 15px; border-radius: 8px; margin: 20px 0; }
+        .severity { display: inline-block; padding: 8px 15px; border-radius: 20px; font-weight: bold; }
+        .severity-low { background: #d4edda; color: #155724; }
+        .severity-moderate { background: #fff3cd; color: #856404; }
+        .severity-high { background: #f8d7da; color: #721c24; }
+        .condition { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #1E5EFF; }
+        .image-container { margin: 20px 0; text-align: center; }
+        .image-container img { max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        ul { padding-left: 25px; }
+        li { margin: 8px 0; }
+        .metadata { color: #666; font-size: 14px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>🩺 SkinAid Analysis Report</h1>
+    <p class="metadata"><strong>Generated:</strong> ${new Date(analysis.analysis_date || analysis.created_date).toLocaleString()}</p>
+    <p class="metadata"><strong>Subject Type:</strong> ${analysis.subject_type === "pet" ? "Pet/Animal" : "Human"}</p>
+    
+    <div class="disclaimer">
+        <strong>⚠️ IMPORTANT DISCLAIMER</strong><br>
+        This report is for educational purposes only and does not constitute medical advice, diagnosis, or treatment. 
+        Please consult a qualified healthcare professional for any skin concerns.
+    </div>
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    ${analysis.image_url ? `
+    <div class="image-container">
+        <h2>📸 Analyzed Image</h2>
+        <img src="${analysis.image_url}" alt="Skin analysis image" />
+    </div>
+    ` : ''}
 
-IMPORTANT DISCLAIMER
-This report is for educational purposes only and does not constitute medical advice, 
-diagnosis, or treatment. Please consult a qualified healthcare professional for any 
-skin concerns.
+    <h2>📊 Severity Assessment</h2>
+    <p><span class="severity severity-${analysis.severity || 'low'}">${analysis.severity?.toUpperCase() || "NOT DETERMINED"}</span></p>
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    ${analysis.user_context ? `
+    <h2>📝 User Context</h2>
+    <p>${analysis.user_context}</p>
+    ` : ''}
 
-SUBJECT TYPE: ${analysis.subject_type === "pet" ? "Pet/Animal" : "Human"}
-SEVERITY ESTIMATE: ${analysis.severity?.toUpperCase() || "Not determined"}
+    <h2>🔍 Possible Conditions</h2>
+    ${analysis.conditions?.map((c, i) => `
+        <div class="condition">
+            <h3>${i + 1}. ${c.name}</h3>
+            <p>${c.description}</p>
+            <p><strong>Confidence:</strong> ${c.confidence ? Math.round(c.confidence * 100) + "%" : "N/A"}</p>
+        </div>
+    `).join("") || "<p>No conditions identified</p>"}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    <h2>👁️ Visual Observations</h2>
+    <ul>
+    ${analysis.observations?.map(o => `<li>${o}</li>`).join("") || "<li>No observations recorded</li>"}
+    </ul>
 
-POSSIBLE CONDITIONS
-${analysis.conditions?.map((c, i) => `
-${i + 1}. ${c.name}
-   ${c.description}
-   Confidence: ${c.confidence ? Math.round(c.confidence * 100) + "%" : "N/A"}
-`).join("") || "No conditions identified"}
+    <h2>💡 Recommended Next Steps</h2>
+    <ul>
+    ${analysis.recommendations?.map(r => `<li>${r}</li>`).join("") || "<li>No recommendations</li>"}
+    </ul>
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-VISUAL OBSERVATIONS
-${analysis.observations?.map((o, i) => `• ${o}`).join("\n") || "No observations recorded"}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-RECOMMENDED NEXT STEPS
-${analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join("\n") || "No recommendations"}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-This report was generated by SkinAid - AI-Assisted Skin Screening Platform
+    <hr style="margin: 40px 0; border: none; border-top: 2px solid #e0e0e0;">
+    <p style="text-align: center; color: #666; font-size: 14px;">
+        This report was generated by <strong>SkinAid</strong> - AI-Assisted Skin Screening Platform
+    </p>
+</body>
+</html>
     `.trim();
     
-    const blob = new Blob([report], { type: "text/plain" });
+    const blob = new Blob([htmlReport], { type: "application/msword" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `skinaid-report-${new Date(analysis.analysis_date || analysis.created_date).toISOString().split("T")[0]}.txt`;
+    a.download = `skinaid-report-${new Date(analysis.analysis_date || analysis.created_date).toISOString().split("T")[0]}.doc`;
     a.click();
     URL.revokeObjectURL(url);
   };
