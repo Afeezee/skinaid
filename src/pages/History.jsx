@@ -52,7 +52,23 @@ export default function History() {
     }
   });
 
-  const handleDownload = (analysis) => {
+  const handleDownload = async (analysis) => {
+    // Convert image URL to base64
+    let base64Image = null;
+    if (analysis.image_url) {
+      try {
+        const response = await fetch(analysis.image_url);
+        const blob = await response.blob();
+        base64Image = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        });
+      } catch (err) {
+        console.error("Failed to load image:", err);
+      }
+    }
+    
     const htmlReport = `
 <!DOCTYPE html>
 <html>
