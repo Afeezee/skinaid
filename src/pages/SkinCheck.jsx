@@ -238,10 +238,10 @@ Be calm, reassuring, and educational. Never claim to diagnose. Always recommend 
         Please consult a qualified healthcare professional for any skin concerns.
     </div>
 
-    ${uploadedImageUrls.length > 0 ? `
+    ${base64Images.filter(Boolean).length > 0 ? `
     <div class="image-container">
-        <h2>📸 Analyzed Image${uploadedImageUrls.length > 1 ? 's' : ''}</h2>
-        ${uploadedImageUrls.map((url, i) => `<img src="${url}" alt="Skin analysis image ${i + 1}" style="margin-bottom: 10px;" />`).join('')}
+        <h2>📸 Analyzed Image${base64Images.filter(Boolean).length > 1 ? 's' : ''}</h2>
+        ${base64Images.filter(Boolean).map((base64, i) => `<img src="${base64}" alt="Skin analysis image ${i + 1}" style="margin-bottom: 10px; max-width: 600px;" />`).join('')}
     </div>
     ` : ''}
 
