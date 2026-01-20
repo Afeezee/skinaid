@@ -91,12 +91,11 @@ export default function Layout({ children, currentPageName }) {
               to={createPageUrl("Home")} 
               className="flex items-center gap-2"
             >
-              <div className="w-9 h-9 bg-gradient-to-br from-[#1E5EFF] to-[#1CB5A3] rounded-xl flex items-center justify-center">
-                <Activity className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-slate-900 dark:text-white">
-                SkinAid
-              </span>
+              <img 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6955eb720a2ed8e8e54923b6/51b992dc1_33f2ffa57_752e4b410_logo.png" 
+                alt="SkinAid Logo"
+                className="h-10 w-auto"
+              />
             </Link>
 
             {/* Desktop Nav */}
