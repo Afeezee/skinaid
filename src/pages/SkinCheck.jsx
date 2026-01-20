@@ -241,7 +241,7 @@ Be calm, reassuring, and educational. Never claim to diagnose. Always recommend 
     ${base64Images.filter(Boolean).length > 0 ? `
     <div class="image-container">
         <h2>📸 Analyzed Image${base64Images.filter(Boolean).length > 1 ? 's' : ''}</h2>
-        ${base64Images.filter(Boolean).map((base64, i) => `<img src="${base64}" alt="Skin analysis image ${i + 1}" style="margin-bottom: 10px; max-width: 600px;" />`).join('')}
+        ${base64Images.filter(Boolean).map((base64, i) => `<img src="${base64}" alt="Skin analysis image ${i + 1}" style="margin-bottom: 10px; width: 5cm; height: auto; max-height: 6cm;" />`).join('')}
     </div>
     ` : ''}
 
