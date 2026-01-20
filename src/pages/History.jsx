@@ -106,7 +106,7 @@ export default function History() {
     ${base64Image ? `
     <div class="image-container">
         <h2>📸 Analyzed Image</h2>
-        <img src="${base64Image}" alt="Skin analysis image" style="width: 5cm; height: auto; max-height: 6cm;" />
+        <img src="${base64Image}" alt="Skin analysis image" style="width: 3cm; height: auto; max-height: 3.5cm;" />
     </div>
     ` : ''}
 
