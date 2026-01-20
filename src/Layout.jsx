@@ -12,7 +12,7 @@ import {
   History, 
   Info, 
   Lock,
-  Activity,
+  Sparkles,
   LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -92,7 +92,7 @@ export default function Layout({ children, currentPageName }) {
               className="flex items-center gap-2"
             >
               <div className="w-9 h-9 bg-gradient-to-br from-[#1E5EFF] to-[#1CB5A3] rounded-xl flex items-center justify-center">
-                <Activity className="w-5 h-5 text-white" />
+                <Sparkles className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold text-slate-900 dark:text-white">
                 SkinAid
