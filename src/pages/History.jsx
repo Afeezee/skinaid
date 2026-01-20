@@ -103,10 +103,10 @@ export default function History() {
         Please consult a qualified healthcare professional for any skin concerns.
     </div>
 
-    ${analysis.image_url ? `
+    ${base64Image ? `
     <div class="image-container">
         <h2>📸 Analyzed Image</h2>
-        <img src="${analysis.image_url}" alt="Skin analysis image" />
+        <img src="${base64Image}" alt="Skin analysis image" style="max-width: 600px;" />
     </div>
     ` : ''}
 
