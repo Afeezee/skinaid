@@ -183,8 +183,26 @@ Be calm, reassuring, and educational. Never claim to diagnose. Always recommend 
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!results || uploadedImageUrls.length === 0) return;
+    
+    // Convert image URLs to base64
+    const imagePromises = uploadedImageUrls.map(async (url) => {
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        });
+      } catch (err) {
+        console.error("Failed to load image:", err);
+        return null;
+      }
+    });
+    
+    const base64Images = await Promise.all(imagePromises);
     
     const htmlReport = `
 <!DOCTYPE html>
