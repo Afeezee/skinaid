@@ -178,13 +178,6 @@ export default function History() {
       <div className="container mx-auto max-w-4xl">
         {/* Header */}
         <div className="mb-8">
-          <Link 
-            to={createPageUrl("Home")}
-            className="inline-flex items-center text-slate-600 dark:text-slate-400 hover:text-[#1E5EFF] transition-colors mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Home
-          </Link>
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">
