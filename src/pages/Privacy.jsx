@@ -23,6 +23,24 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function Privacy() {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      // Delete all user's analyses
+      const analyses = await base44.entities.SkinAnalysis.list("-created_date", 200);
+      await Promise.all(analyses.map((a) => base44.entities.SkinAnalysis.delete(a.id)));
+      // Logout after deletion
+      base44.auth.logout();
+    } catch (err) {
+      console.error("Delete account error:", err);
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
+
   const sections = [
     {
       icon: Lock,
