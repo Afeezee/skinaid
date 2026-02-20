@@ -177,11 +177,63 @@ export default function Privacy() {
           </p>
         </motion.div>
 
+        {/* Delete Account */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="mt-8 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-3xl p-8"
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="w-6 h-6 text-red-500" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Delete Account</h3>
+              <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">
+                Permanently delete your account and all associated data including analyses, images, and history. 
+                This action cannot be undone.
+              </p>
+              <Button
+                variant="destructive"
+                onClick={() => setShowDeleteDialog(true)}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete My Account
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Last Updated */}
-        <p className="text-center text-sm text-slate-400 mt-8">
+        <p className="text-center text-sm text-slate-400 mt-8 mb-4">
           Last updated: {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
         </p>
       </div>
+
+      {/* Delete Account Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete your account and all your skin analysis history.
+              This action <strong>cannot be undone</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAccount}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isDeleting ? "Deleting..." : "Yes, delete my account"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
