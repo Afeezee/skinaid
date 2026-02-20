@@ -46,10 +46,21 @@ export default function History() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.SkinAnalysis.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["skin-analyses"] });
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["skin-analyses"] });
+      const previous = queryClient.getQueryData(["skin-analyses"]);
+      queryClient.setQueryData(["skin-analyses"], (old) =>
+        (old || []).filter((a) => a.id !== id)
+      );
       setDeleteId(null);
-    }
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      queryClient.setQueryData(["skin-analyses"], context.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["skin-analyses"] });
+    },
   });
 
   const handleDownload = async (analysis) => {
