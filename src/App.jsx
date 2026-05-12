@@ -1,80 +1,94 @@
-import { Toaster } from "@/components/ui/toaster"
-import { QueryClientProvider } from '@tanstack/react-query'
-import { queryClientInstance } from '@/lib/query-client'
-import NavigationTracker from '@/lib/NavigationTracker'
-import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import PageNotFound from './lib/PageNotFound';
-import { AuthProvider, useAuth } from '@/lib/AuthContext';
-import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import React, { Suspense, lazy } from 'react'
+import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom'
 
-const { Pages, Layout, mainPage } = pagesConfig;
-const mainPageKey = mainPage ?? Object.keys(Pages)[0];
-const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
+import AuthGuard from '@/components/AuthGuard'
+import LoadingSpinner from '@/components/LoadingSpinner'
+import { Toaster } from '@/components/ui/toaster'
+import Layout from '@/Layout'
+import { AuthProvider } from '@/lib/auth'
 
-const LayoutWrapper = ({ children, currentPageName }) => Layout ?
-  <Layout currentPageName={currentPageName}>{children}</Layout>
-  : <>{children}</>;
+const PageNotFound = lazy(() => import('@/lib/PageNotFound'))
+const About = lazy(() => import('@/pages/About'))
+const History = lazy(() => import('@/pages/History'))
+const Home = lazy(() => import('@/pages/Home'))
+const Login = lazy(() => import('@/pages/Login'))
+const Privacy = lazy(() => import('@/pages/Privacy'))
+const SkinCheck = lazy(() => import('@/pages/SkinCheck'))
 
-const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
-
-  // Show loading spinner while checking app public settings or auth
-  if (isLoadingPublicSettings || isLoadingAuth) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  // Handle authentication errors
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      navigateToLogin();
-      return null;
-    }
-  }
-
-  // Render the main app
-  return (
-    <Routes>
-      <Route path="/" element={
-        <LayoutWrapper currentPageName={mainPageKey}>
-          <MainPage />
-        </LayoutWrapper>
-      } />
-      {Object.entries(Pages).map(([path, Page]) => (
-        <Route
-          key={path}
-          path={`/${path}`}
-          element={
-            <LayoutWrapper currentPageName={path}>
-              <Page />
-            </LayoutWrapper>
-          }
-        />
-      ))}
-      <Route path="*" element={<PageNotFound />} />
-    </Routes>
-  );
-};
-
+function PageFrame({ children, currentPageName }) {
+  return <Layout currentPageName={currentPageName}>{children}</Layout>
+}
 
 function App() {
-
   return (
     <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <NavigationTracker />
-          <AuthenticatedApp />
-        </Router>
+      <Router>
+        <Suspense fallback={<LoadingSpinner fullScreen message="Loading page..." />}>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <PageFrame currentPageName="Home">
+                  <Home />
+                </PageFrame>
+              }
+            />
+            <Route
+              path="/about"
+              element={
+                <PageFrame currentPageName="About">
+                  <About />
+                </PageFrame>
+              }
+            />
+            <Route
+              path="/privacy"
+              element={
+                <PageFrame currentPageName="Privacy">
+                  <Privacy />
+                </PageFrame>
+              }
+            />
+            <Route
+              path="/login"
+              element={
+                <PageFrame currentPageName="Login">
+                  <Login />
+                </PageFrame>
+              }
+            />
+            <Route
+              path="/skin-check"
+              element={
+                <PageFrame currentPageName="SkinCheck">
+                  <AuthGuard>
+                    <SkinCheck />
+                  </AuthGuard>
+                </PageFrame>
+              }
+            />
+            <Route
+              path="/history"
+              element={
+                <PageFrame currentPageName="History">
+                  <AuthGuard>
+                    <History />
+                  </AuthGuard>
+                </PageFrame>
+              }
+            />
+
+            <Route path="/Home" element={<Navigate to="/" replace />} />
+            <Route path="/About" element={<Navigate to="/about" replace />} />
+            <Route path="/Privacy" element={<Navigate to="/privacy" replace />} />
+            <Route path="/SkinCheck" element={<Navigate to="/skin-check" replace />} />
+            <Route path="/History" element={<Navigate to="/history" replace />} />
+
+            <Route path="*" element={<PageNotFound />} />
+          </Routes>
+        </Suspense>
         <Toaster />
-      </QueryClientProvider>
+      </Router>
     </AuthProvider>
   )
 }

@@ -1,466 +1,454 @@
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { base44 } from "@/api/base44Client";
+import React, { useEffect, useState } from "react";
+import {
+  AlertCircle,
+  Camera,
+  ExternalLink,
+  RefreshCw,
+  ShieldCheck,
+  Sparkles,
+  UploadCloud,
+} from "lucide-react";
+
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Scan, RefreshCw, ArrowLeft, AlertCircle } from "lucide-react";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import ImageUploader from "@/components/skincheck/ImageUploader";
-import SubjectSelector from "@/components/skincheck/SubjectSelector";
-import AnalysisProgress from "@/components/ui/AnalysisProgress";
-import ResultsPanel from "@/components/skincheck/ResultsPanel";
-import RatingWidget from "@/components/skincheck/RatingWidget";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Disclaimer from "@/components/ui/Disclaimer";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/lib/auth";
+import { createSkinCheck } from "@/lib/db";
+import { deleteSkinImage, uploadSkinImage } from "@/lib/storage";
 
-export default function SkinCheck() {
-  const [selectedImages, setSelectedImages] = useState([]);
-  const [subjectType, setSubjectType] = useState("human");
-  const [additionalContext, setAdditionalContext] = useState("");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [currentStep, setCurrentStep] = useState(null);
-  const [results, setResults] = useState(null);
-  const [error, setError] = useState(null);
-  const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
-  const [savedAnalysisId, setSavedAnalysisId] = useState(null);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+const ACCEPTED_FILE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_SYMPTOM_TEXT_LENGTH = 1500;
 
-  // Check authentication on mount
-  React.useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        await base44.auth.me();
-        setIsCheckingAuth(false);
-      } catch (err) {
-        // Redirect to login with return to SkinCheck
-        base44.auth.redirectToLogin(createPageUrl("SkinCheck"));
-      }
-    };
-    checkAuth();
-  }, []);
+function getConfidenceBadgeClass(confidence = "low") {
+  const normalizedConfidence = confidence.toLowerCase();
 
-  if (isCheckingAuth) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
-        <div className="text-slate-600 dark:text-slate-400">Loading...</div>
-      </div>
-    );
+  if (normalizedConfidence === "high") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
   }
 
-  const handleAnalyze = async () => {
-    if (selectedImages.length === 0) return;
-    
-    setIsAnalyzing(true);
-    setError(null);
-    setResults(null);
-    
-    // Step 1: Upload
-    setCurrentStep("upload");
-    await new Promise(r => setTimeout(r, 800));
-    
-    // Step 2: Secure
-    setCurrentStep("secure");
-    
-    const fileUrls = [];
-    try {
-      for (const image of selectedImages) {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file: image });
-        fileUrls.push(file_url);
+  if (normalizedConfidence === "medium") {
+    return "border-amber-200 bg-amber-50 text-amber-700";
+  }
+
+  return "border-red-200 bg-red-50 text-red-700";
+}
+
+function getSeverityBadgeClass(severity = "none") {
+  const normalizedSeverity = severity.toLowerCase();
+
+  if (normalizedSeverity === "severe") {
+    return "border-red-200 bg-red-50 text-red-700";
+  }
+
+  if (normalizedSeverity === "moderate") {
+    return "border-amber-200 bg-amber-50 text-amber-700";
+  }
+
+  if (normalizedSeverity === "mild") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+
+  return "border-slate-200 bg-slate-50 text-slate-700";
+}
+
+function getUrgencyBadgeClass(urgency = "routine") {
+  const normalizedUrgency = urgency.toLowerCase();
+
+  if (normalizedUrgency === "urgent") {
+    return "border-red-200 bg-red-50 text-red-700";
+  }
+
+  if (normalizedUrgency === "soon") {
+    return "border-amber-200 bg-amber-50 text-amber-700";
+  }
+
+  return "border-emerald-200 bg-emerald-50 text-emerald-700";
+}
+
+function getFriendlyErrorMessage(error) {
+  const message = error?.message?.toLowerCase() ?? "";
+
+  if (message.includes("imagebase64") || message.includes("imageurl")) {
+    return "The selected image could not be processed. Please choose it again.";
+  }
+
+  if (message.includes("temporarily unavailable") || message.includes("rate-limited") || message.includes("quota")) {
+    return "The AI analysis service is temporarily unavailable. Please try again shortly.";
+  }
+
+  if (message.includes("too large")) {
+    return "The image is too large for the current AI model. Try a smaller or lower-resolution photo.";
+  }
+
+  if (message.includes("network")) {
+    return "A network error interrupted the upload. Check your connection and try again.";
+  }
+
+  return "We could not analyse this image. Please try again with a clear photo in JPEG, PNG, or WebP format.";
+}
+
+function ResultCard({ result, symptomDetails }) {
+  return (
+    <Card className="rounded-3xl border-slate-200 shadow-sm dark:border-slate-800">
+      <CardHeader className="space-y-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-sm font-medium uppercase tracking-[0.25em] text-[#1E5EFF]">Assessment</p>
+            <CardTitle className="mt-3 text-3xl font-semibold text-slate-900 dark:text-white">
+              {result.condition || "No visible concern"}
+            </CardTitle>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Badge className={getConfidenceBadgeClass(result.confidence)}>
+              Confidence: {result.confidence || "low"}
+            </Badge>
+            <Badge className={getSeverityBadgeClass(result.severity)}>
+              Severity: {result.severity || "none"}
+            </Badge>
+            <Badge className={getUrgencyBadgeClass(result.urgency)}>
+              Urgency: {result.urgency || "routine"}
+            </Badge>
+          </div>
+        </div>
+
+        <CardDescription className="text-base leading-7 text-slate-600 dark:text-slate-300">
+          {result.description || "No description was returned by the AI model."}
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="space-y-6">
+        {symptomDetails ? (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-950">
+            <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+              User-reported symptoms
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-200">{symptomDetails}</p>
+          </div>
+        ) : null}
+
+        <div>
+          <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+            Observed characteristics
+          </h3>
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-600 dark:text-slate-300">
+            {(result.characteristics ?? []).map((characteristic) => (
+              <li key={characteristic}>{characteristic}</li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="rounded-2xl border border-[#1CB5A3]/20 bg-[#1CB5A3]/10 p-5">
+          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-[#0f766e]">
+            <ShieldCheck className="h-4 w-4" />
+            Advice
+          </div>
+          <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-200">{result.advice}</p>
+        </div>
+
+        <p className="text-sm italic leading-6 text-slate-500 dark:text-slate-400">{result.disclaimer}</p>
+
+        {result.seek_professional ? (
+          <Button
+            type="button"
+            className="bg-[#1E5EFF] text-white hover:bg-[#1a52e0]"
+            onClick={() => window.open("https://find-a-derm.aad.org/", "_blank", "noopener,noreferrer")}
+          >
+            Seek Professional Help
+            <ExternalLink className="ml-2 h-4 w-4" />
+          </Button>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function SkinCheck() {
+  const { user } = useAuth();
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [result, setResult] = useState(null);
+  const [saveNotice, setSaveNotice] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [submittedSymptomDetails, setSubmittedSymptomDetails] = useState("");
+  const [symptomDetails, setSymptomDetails] = useState("");
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
       }
-      setUploadedImageUrls(fileUrls);
-    } catch (err) {
-      setError("Failed to upload images. Please try again.");
-      setIsAnalyzing(false);
+    };
+  }, [previewUrl]);
+
+  function handleFileChange(event) {
+    const nextFile = event.target.files?.[0];
+
+    if (!nextFile) {
       return;
     }
-    
-    await new Promise(r => setTimeout(r, 500));
-    
-    // Step 3: Analyze
-    setCurrentStep("analyze");
-    
-    const subjectContext = subjectType === "pet" 
-      ? "This is a pet (animal) skin image. Provide veterinary-relevant insights."
-      : "This is a human skin image. Provide dermatological insights.";
-    
-    const contextPrompt = additionalContext 
-      ? `\n\nAdditional context provided by user: ${additionalContext}`
-      : "";
-    
+
+    if (!ACCEPTED_FILE_TYPES.includes(nextFile.type)) {
+      setErrorMessage("Please upload a JPEG, PNG, or WebP image.");
+      event.target.value = "";
+      return;
+    }
+
+    if (nextFile.size > MAX_FILE_SIZE_BYTES) {
+      setErrorMessage("Please upload an image smaller than 10MB.");
+      event.target.value = "";
+      return;
+    }
+
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    setSelectedFile(nextFile);
+    setPreviewUrl(URL.createObjectURL(nextFile));
+    setResult(null);
+    setSaveNotice("");
+    setErrorMessage("");
+  }
+
+  async function handleAnalyze() {
+    if (!selectedFile || !user?.id) {
+      return;
+    }
+
+    if (symptomDetails.length > MAX_SYMPTOM_TEXT_LENGTH) {
+      setErrorMessage(`Please keep symptom notes under ${MAX_SYMPTOM_TEXT_LENGTH} characters.`);
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setErrorMessage("");
+    setResult(null);
+    setSaveNotice("");
+
+    const trimmedSymptomDetails = symptomDetails.trim();
+    let uploadedImage = null;
+    let analysisCompleted = false;
+
     try {
-      const analysisResult = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are a skin analysis assistant providing educational insights (NOT medical diagnosis).
-        
-${subjectContext}${contextPrompt}
+      uploadedImage = await uploadSkinImage(selectedFile, user.id);
 
-${fileUrls.length > 1 ? `You have been provided with ${fileUrls.length} images of the same subject. Analyze all images together to provide a comprehensive assessment.` : ''}
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          imageUrl: uploadedImage.publicUrl,
+          symptomText: trimmedSymptomDetails,
+        }),
+      });
 
-Analyze ${fileUrls.length > 1 ? 'these skin images' : 'this skin image'} and provide:
-1. Possible conditions (2-3 most likely based on visible features)
-2. Visual observations about color, texture, patterns, lesions, inflammation
-3. Severity estimate (low, moderate, or high)
-4. Recommendations for next steps
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.message || payload.error || "Analysis failed.");
+      }
 
-Be calm, reassuring, and educational. Never claim to diagnose. Always recommend professional consultation for concerning findings.`,
-              file_urls: fileUrls,
-              response_json_schema: {
-          type: "object",
-          properties: {
-            conditions: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  name: { type: "string" },
-                  description: { type: "string" },
-                  confidence: { type: "number" }
-                }
-              }
-            },
-            severity: { 
-              type: "string",
-              enum: ["low", "moderate", "high"]
-            },
-            observations: {
-              type: "array",
-              items: { type: "string" }
-            },
-            recommendations: {
-              type: "array",
-              items: { type: "string" }
-            }
-          }
+      const nextResult = payload.result;
+      analysisCompleted = true;
+      setResult(nextResult);
+      setSubmittedSymptomDetails(trimmedSymptomDetails);
+
+      try {
+        const { error } = await createSkinCheck({
+          userId: user.id,
+          imageUrl: uploadedImage.publicUrl,
+          result: trimmedSymptomDetails
+            ? { ...nextResult, user_notes: trimmedSymptomDetails }
+            : nextResult,
+        });
+
+        if (error) {
+          throw error;
         }
-      });
-      
-      console.log("Analysis result:", analysisResult);
-      
-      await new Promise(r => setTimeout(r, 500));
-      
-      // Step 4: Generate
-      setCurrentStep("generate");
-      await new Promise(r => setTimeout(r, 800));
-      
-      setResults(analysisResult);
-      
-      // Auto-save to history
-      try {
-        const savedAnalysis = await base44.entities.SkinAnalysis.create({
-          image_url: fileUrls[0], // Save first image as primary
-          conditions: analysisResult.conditions,
-          severity: analysisResult.severity,
-          observations: analysisResult.observations,
-          recommendations: analysisResult.recommendations,
-          subject_type: subjectType,
-          analysis_date: new Date().toISOString(),
-          user_context: additionalContext || null
-        });
-        setSavedAnalysisId(savedAnalysis.id);
-      } catch (saveErr) {
-        console.error("Failed to auto-save:", saveErr);
+
+        setSaveNotice("Analysis complete. The result has been saved to your history.");
+      } catch (saveError) {
+        console.error("Save analysis error:", saveError);
+        setSaveNotice("Analysis complete, but we could not save it to your history.");
       }
-      
-      setIsAnalyzing(false);
-      setCurrentStep(null);
-    } catch (err) {
-      console.error("Analysis error:", err);
-      setError(err.message || "Analysis failed. Please try again with a clearer image.");
-      setIsAnalyzing(false);
-      setCurrentStep(null);
-    }
-  };
-
-  const handleRate = async (ratingData) => {
-    if (!savedAnalysisId) return;
-    
-    try {
-      await base44.entities.SkinAnalysis.update(savedAnalysisId, {
-        rating: ratingData.rating,
-        rating_feedback: ratingData.feedback
-      });
-    } catch (err) {
-      console.error("Failed to save rating:", err);
-    }
-  };
-
-  const handleDownload = async () => {
-    if (!results || uploadedImageUrls.length === 0) return;
-    
-    // Convert image URLs to base64
-    const imagePromises = uploadedImageUrls.map(async (url) => {
-      try {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(blob);
-        });
-      } catch (err) {
-        console.error("Failed to load image:", err);
-        return null;
+    } catch (error) {
+      if (uploadedImage?.path && !analysisCompleted) {
+        try {
+          await deleteSkinImage(uploadedImage.path);
+        } catch (cleanupError) {
+          console.error("Failed to clean up uploaded image after analysis error:", cleanupError);
+        }
       }
-    });
-    
-    const base64Images = await Promise.all(imagePromises);
-    
-    const htmlReport = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>SkinAid Analysis Report</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }
-        h1 { color: #1E5EFF; border-bottom: 3px solid #1CB5A3; padding-bottom: 10px; }
-        h2 { color: #333; margin-top: 30px; border-left: 4px solid #1E5EFF; padding-left: 10px; }
-        .disclaimer { background: #fff3cd; border: 2px solid #ffc107; padding: 15px; border-radius: 8px; margin: 20px 0; }
-        .severity { display: inline-block; padding: 8px 15px; border-radius: 20px; font-weight: bold; }
-        .severity-low { background: #d4edda; color: #155724; }
-        .severity-moderate { background: #fff3cd; color: #856404; }
-        .severity-high { background: #f8d7da; color: #721c24; }
-        .condition { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #1E5EFF; }
-        .image-container { margin: 20px 0; text-align: center; }
-        .image-container img { max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        ul { padding-left: 25px; }
-        li { margin: 8px 0; }
-        .metadata { color: #666; font-size: 14px; margin: 20px 0; }
-    </style>
-</head>
-<body>
-    <h1>🩺 SkinAid Analysis Report</h1>
-    <p class="metadata"><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
-    <p class="metadata"><strong>Subject Type:</strong> ${subjectType === "pet" ? "Pet/Animal" : "Human"}</p>
-    
-    <div class="disclaimer">
-        <strong>⚠️ IMPORTANT DISCLAIMER</strong><br>
-        This report is for educational purposes only and does not constitute medical advice, diagnosis, or treatment. 
-        Please consult a qualified healthcare professional for any skin concerns.
-    </div>
 
-    ${base64Images.filter(Boolean).length > 0 ? `
-    <div class="image-container">
-        <h2>📸 Analyzed Image${base64Images.filter(Boolean).length > 1 ? 's' : ''}</h2>
-        ${base64Images.filter(Boolean).map((base64, i) => `<img src="${base64}" alt="Skin analysis image ${i + 1}" style="margin-bottom: 10px; width: 3cm; height: auto; max-height: 3.5cm;" />`).join('')}
-    </div>
-    ` : ''}
+      console.error("Skin check error:", error);
+      setErrorMessage(getFriendlyErrorMessage(error));
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }
 
-    <h2>📊 Severity Assessment</h2>
-    <p><span class="severity severity-${results.severity || 'low'}">${results.severity?.toUpperCase() || "NOT DETERMINED"}</span></p>
+  function handleReset() {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
 
-    ${additionalContext ? `
-    <h2>📝 User Context</h2>
-    <p>${additionalContext}</p>
-    ` : ''}
-
-    <h2>🔍 Possible Conditions</h2>
-    ${results.conditions?.map((c, i) => `
-        <div class="condition">
-            <h3>${i + 1}. ${c.name}</h3>
-            <p>${c.description}</p>
-            <p><strong>Confidence:</strong> ${c.confidence ? Math.round(c.confidence * 100) + "%" : "N/A"}</p>
-        </div>
-    `).join("") || "<p>No conditions identified</p>"}
-
-    <h2>👁️ Visual Observations</h2>
-    <ul>
-    ${results.observations?.map(o => `<li>${o}</li>`).join("") || "<li>No observations recorded</li>"}
-    </ul>
-
-    <h2>💡 Recommended Next Steps</h2>
-    <ul>
-    ${results.recommendations?.map(r => `<li>${r}</li>`).join("") || "<li>No recommendations</li>"}
-    </ul>
-
-    <hr style="margin: 40px 0; border: none; border-top: 2px solid #e0e0e0;">
-    <p style="text-align: center; color: #666; font-size: 14px;">
-        This report was generated by <strong>SkinAid</strong> - AI-Assisted Skin Screening Platform
-    </p>
-</body>
-</html>
-    `.trim();
-    
-    const blob = new Blob([htmlReport], { type: "application/msword" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `skinaid-report-${new Date().toISOString().split("T")[0]}.doc`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleReset = () => {
-    setSelectedImages([]);
-    setResults(null);
-    setError(null);
-    setUploadedImageUrls([]);
-    setAdditionalContext("");
-    setSavedAnalysisId(null);
-  };
+    setSelectedFile(null);
+    setPreviewUrl("");
+    setResult(null);
+    setSaveNotice("");
+    setErrorMessage("");
+    setSubmittedSymptomDetails("");
+    setSymptomDetails("");
+  }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 py-8 px-4">
-      <div className="container mx-auto max-w-6xl">
-        {/* Header */}
-        <div className="mb-8">
-          <Link 
-            to={createPageUrl("Home")}
-            className="inline-flex items-center text-slate-600 dark:text-slate-400 hover:text-[#1E5EFF] transition-colors mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Home
-          </Link>
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">
-            Skin Check
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-2">
-            Upload an image to receive AI-assisted educational insights
+    <div className="min-h-screen bg-slate-50 py-8 dark:bg-slate-900">
+      <div className="container mx-auto max-w-5xl px-4">
+        <div className="mb-8 max-w-3xl">
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#1E5EFF]">Protected scan workflow</p>
+          <h1 className="mt-3 text-4xl font-semibold text-slate-900 dark:text-white">AI-assisted skin image screening</h1>
+          <p className="mt-4 text-base leading-7 text-slate-600 dark:text-slate-300">
+            Capture a clear skin image, submit it securely for multimodal analysis, and save the result to your private history.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Panel - Upload */}
-          <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-700 shadow-sm">
-            <AnimatePresence mode="wait">
-              {isAnalyzing ? (
-                <motion.div
-                  key="progress"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <AnalysisProgress currentStep={currentStep} error={error} />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="upload"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="space-y-6"
-                >
-                  {/* Subject Selector */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                      What are you checking?
-                    </label>
-                    <SubjectSelector value={subjectType} onChange={setSubjectType} />
-                  </div>
-
-                  {/* Image Uploader */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                      Upload Images
-                    </label>
-                    <ImageUploader
-                      selectedImages={selectedImages}
-                      onImagesSelect={setSelectedImages}
-                      onClear={() => setSelectedImages([])}
-                    />
-                  </div>
-
-                  {/* Additional Context */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                      Additional Details (Optional)
-                    </label>
-                    <Textarea
-                      placeholder="Add any relevant context: symptoms, duration, changes over time, etc."
-                      value={additionalContext}
-                      onChange={(e) => setAdditionalContext(e.target.value)}
-                      className="resize-none"
-                      rows={3}
-                    />
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-3 pt-4">
-                    {results ? (
-                      <Button
-                        onClick={handleReset}
-                        variant="outline"
-                        className="flex-1"
-                      >
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Start New Check
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={handleAnalyze}
-                        disabled={selectedImages.length === 0 || isAnalyzing}
-                        className="flex-1 bg-[#1E5EFF] hover:bg-[#1a52e0] text-white py-6 text-lg rounded-xl"
-                      >
-                        <Scan className="w-5 h-5 mr-2" />
-                        Analyze {selectedImages.length > 1 ? 'Images' : 'Image'}
-                      </Button>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Right Panel - Results */}
-          <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-700 shadow-sm">
-            <AnimatePresence mode="wait">
-              {error && !isAnalyzing ? (
-                <motion.div
-                  key="error"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="h-full flex flex-col items-center justify-center text-center py-16"
-                >
-                  <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mb-6">
-                    <AlertCircle className="w-10 h-10 text-red-500" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
-                    Analysis Error
-                  </h3>
-                  <p className="text-slate-500 dark:text-slate-400 max-w-sm mb-6">
-                    {error}
-                  </p>
-                  <Button
-                    onClick={() => setError(null)}
-                    variant="outline"
-                  >
-                    Try Again
-                  </Button>
-                </motion.div>
-              ) : results ? (
-                <div className="space-y-4">
-                  <ResultsPanel
-                    results={results}
-                    onDownload={handleDownload}
-                  />
-                  <RatingWidget
-                    onRate={handleRate}
-                    analysisId={savedAnalysisId}
-                  />
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <Card className="rounded-3xl border-slate-200 shadow-sm dark:border-slate-800">
+            <CardHeader>
+              <CardTitle className="text-2xl text-slate-900 dark:text-white">Upload a skin image</CardTitle>
+              <CardDescription className="text-base leading-7 text-slate-600 dark:text-slate-300">
+                Use your camera on mobile or choose a file from your device, then optionally add symptom notes for true multimodal analysis. Supported formats: JPEG, PNG, WebP. Maximum size: 10MB.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <label
+                htmlFor="skin-image"
+                className="flex cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center transition hover:border-[#1E5EFF] hover:bg-white dark:border-slate-700 dark:bg-slate-950 dark:hover:border-[#1E5EFF]"
+              >
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1E5EFF]/10 text-[#1E5EFF]">
+                  <UploadCloud className="h-8 w-8" />
                 </div>
-              ) : (
-                <motion.div
-                  key="placeholder"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="h-full flex flex-col items-center justify-center text-center py-16"
-                >
-                  <div className="w-20 h-20 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mb-6">
-                    <Scan className="w-10 h-10 text-slate-300 dark:text-slate-500" />
+                <p className="mt-4 text-lg font-medium text-slate-900 dark:text-white">Choose an image or open the camera</p>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  Mobile devices can open the rear camera directly for faster capture.
+                </p>
+                <input
+                  id="skin-image"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+              </label>
+
+              {selectedFile ? (
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+                  <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                    <Camera className="h-4 w-4 text-[#1E5EFF]" />
+                    <span className="font-medium">{selectedFile.name}</span>
+                    <span>({(selectedFile.size / (1024 * 1024)).toFixed(2)} MB)</span>
                   </div>
-                  <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
-                    Results will appear here
-                  </h3>
-                  <p className="text-slate-500 dark:text-slate-400 max-w-sm">
-                    Upload an image and click "Analyze" to receive AI-assisted insights about your skin
+
+                  {previewUrl ? (
+                    <img
+                      src={previewUrl}
+                      alt="Selected skin image preview"
+                      className="mt-4 h-80 w-full rounded-2xl object-cover"
+                    />
+                  ) : null}
+                </div>
+              ) : null}
+
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                    Optional symptom notes
                   </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                  <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                    Describe pain, itching, swelling, discharge, duration, suspected infection, or any other context you want the model to consider with the image.
+                  </p>
+                </div>
+                <Textarea
+                  value={symptomDetails}
+                  onChange={(event) => setSymptomDetails(event.target.value.slice(0, MAX_SYMPTOM_TEXT_LENGTH))}
+                  placeholder="Example: It has been itchy for 5 days, looks red around the edges, and started after using a new soap."
+                  className="min-h-[132px] resize-y"
+                />
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {symptomDetails.length}/{MAX_SYMPTOM_TEXT_LENGTH} characters
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  type="button"
+                  onClick={handleAnalyze}
+                  disabled={!selectedFile || isAnalyzing}
+                  className="bg-[#1E5EFF] text-white hover:bg-[#1a52e0]"
+                >
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Analyse image
+                </Button>
+                <Button type="button" variant="outline" onClick={handleReset} disabled={isAnalyzing}>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Reset
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-3xl border-slate-200 shadow-sm dark:border-slate-800">
+            <CardHeader>
+              <CardTitle className="text-2xl text-slate-900 dark:text-white">What happens next</CardTitle>
+              <CardDescription className="text-base leading-7 text-slate-600 dark:text-slate-300">
+                Your image is uploaded securely to your storage bucket, its URL and optional symptom notes are sent to a protected serverless function, and the multimodal model returns a structured assessment.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm leading-6 text-slate-600 dark:text-slate-300">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                <p className="font-semibold text-slate-900 dark:text-white">Security</p>
+                <p className="mt-2">All Groq requests are routed through a serverless function so your API key never reaches the browser.</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                <p className="font-semibold text-slate-900 dark:text-white">Storage</p>
+                <p className="mt-2">Uploaded images are reused for both multimodal inference and saved history. If analysis fails, SkinAid now cleans up the temporary upload automatically.</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                <p className="font-semibold text-slate-900 dark:text-white">Medical scope</p>
+                <p className="mt-2">This remains an educational screening tool. It does not provide a diagnosis or replace clinician review.</p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Bottom Disclaimer */}
+        {errorMessage ? (
+          <Alert variant="destructive" className="mt-6 border-red-200 bg-red-50 text-red-700">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Unable to complete analysis</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        ) : null}
+
+        {saveNotice ? (
+          <Alert className="mt-6 border-emerald-200 bg-emerald-50 text-emerald-700">
+            <ShieldCheck className="h-4 w-4" />
+            <AlertTitle>Analysis finished</AlertTitle>
+            <AlertDescription>{saveNotice}</AlertDescription>
+          </Alert>
+        ) : null}
+
+        {isAnalyzing ? <LoadingSpinner message="Analysing your skin image..." /> : null}
+
+        {result ? <div className="mt-6"><ResultCard result={result} symptomDetails={submittedSymptomDetails} /></div> : null}
+
         <div className="mt-8">
           <Disclaimer />
         </div>

@@ -1,9 +1,9 @@
 import React from "react";
+import { Activity, ArrowLeft, LogOut, Moon, Sun } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import { Activity, ArrowLeft, Sun, Moon, LogOut } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { base44 } from "@/api/base44Client";
+import { createPageUrl } from "@/utils";
 
 // Pages that are "root" pages — show logo. All others show Back button.
 const ROOT_PAGES = ["Home", "SkinCheck", "History"];
@@ -77,13 +77,12 @@ export default function AppHeader({ currentPageName, isDark, onToggleTheme, user
                 <LogOut className="w-4 h-4 text-slate-600 dark:text-slate-400" />
               </Button>
             ) : (
-              <Button
-                onClick={() => base44.auth.redirectToLogin(createPageUrl("SkinCheck"))}
-                className="bg-[#1E5EFF] hover:bg-[#1a52e0] text-white text-xs px-3 py-1.5 rounded-lg select-none"
-                style={{ userSelect: "none", WebkitUserSelect: "none" }}
+              <Link
+                to={createPageUrl("Login")}
+                className="inline-flex h-9 items-center rounded-lg bg-[#1E5EFF] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#1a52e0]"
               >
                 Sign In
-              </Button>
+              </Link>
             )}
           </div>
         </div>

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { 
   Lock, 
   Shield, 
@@ -9,7 +10,6 @@ import {
   CheckCircle,
   AlertTriangle
 } from "lucide-react";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -21,23 +21,53 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { getSession, signOut, useAuth } from "@/lib/auth";
+import { createPageUrl } from "@/utils";
 
 export default function Privacy() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
 
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
+    setDeleteMessage("");
+
     try {
-      // Delete all user's analyses
-      const analyses = await base44.entities.SkinAnalysis.list("-created_date", 200);
-      await Promise.all(analyses.map((a) => base44.entities.SkinAnalysis.delete(a.id)));
-      // Logout after deletion
-      base44.auth.logout();
+      if (!user?.id) {
+        throw new Error("Sign in to manage your account.");
+      }
+
+      const { data } = await getSession();
+      const accessToken = data?.session?.access_token;
+
+      if (!accessToken) {
+        throw new Error("Your session has expired. Please sign in again.");
+      }
+
+      const response = await fetch("/api/account/delete", {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.error || "Account deletion failed.");
+      }
+
+      await signOut();
+      setDeleteMessage("Your SkinAid account and all saved data have been deleted.");
+      setShowDeleteDialog(false);
+      navigate(createPageUrl("Home"), { replace: true });
     } catch (err) {
       console.error("Delete account error:", err);
+      setDeleteMessage("We could not delete your account. Please try again.");
+    } finally {
       setIsDeleting(false);
-      setShowDeleteDialog(false);
     }
   };
 
@@ -69,17 +99,17 @@ export default function Privacy() {
         "Your data is never sold to third parties.",
         "We do not share your personal information with advertisers.",
         "Saved analyses are only accessible to you.",
-        "We may use anonymized, aggregated data to improve our AI models."
+        "We may use anonymized, aggregated operational data to improve reliability and product quality."
       ]
     },
     {
       icon: Trash2,
       title: "Data Deletion",
       content: [
-        "You can delete your saved analyses at any time.",
+        "You can delete individual saved analyses at any time.",
         "Deletion is permanent and cannot be undone.",
-        "If you have an account, you can request complete data deletion.",
-        "We honor all deletion requests within 30 days."
+        "You can also delete your full account directly from this page.",
+        "Full account deletion removes profile data, uploaded scan images, and authentication access."
       ]
     },
     {
@@ -191,17 +221,21 @@ export default function Privacy() {
             <div className="flex-1">
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Delete Account</h3>
               <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">
-                Permanently delete your account and all associated data including analyses, images, and history. 
-                This action cannot be undone.
+                Permanently delete your SkinAid account and associated data, including your profile,
+                uploaded scan images, and saved analysis history.
               </p>
               <Button
                 variant="destructive"
                 onClick={() => setShowDeleteDialog(true)}
                 className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={!user}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete My Account
               </Button>
+              {deleteMessage ? (
+                <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{deleteMessage}</p>
+              ) : null}
             </div>
           </div>
         </motion.div>
@@ -218,7 +252,8 @@ export default function Privacy() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete your account and all your skin analysis history.
+              This will permanently delete your SkinAid account, saved scan history, uploaded images,
+              and profile data.
               This action <strong>cannot be undone</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>

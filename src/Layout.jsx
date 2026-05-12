@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import React, { useEffect, useState } from "react";
 import { Activity } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { Link } from "react-router-dom";
+
+import LoadingSpinner from "@/components/LoadingSpinner";
 import AppHeader from "@/components/layout/AppHeader";
 import BottomNav from "@/components/layout/BottomNav";
+import { useAuth } from "@/lib/auth";
+import { createPageUrl } from "@/utils";
 
 const ROOT_PAGES = ["Home", "SkinCheck", "History"];
 
 export default function Layout({ children, currentPageName }) {
   const [isDark, setIsDark] = useState(false);
-  const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { loading, signOut, user } = useAuth();
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("skinaid-theme");
@@ -20,18 +21,6 @@ export default function Layout({ children, currentPageName }) {
       setIsDark(true);
       document.documentElement.classList.add("dark");
     }
-
-    const checkAuth = async () => {
-      try {
-        const currentUser = await base44.auth.me();
-        setUser(currentUser);
-      } catch {
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    checkAuth();
   }, []);
 
   const toggleTheme = () => {
@@ -45,11 +34,13 @@ export default function Layout({ children, currentPageName }) {
     }
   };
 
-  const handleLogout = () => {
-    base44.auth.logout();
+  const handleLogout = async () => {
+    await signOut();
   };
 
-  if (isLoading) return null;
+  if (loading) {
+    return <LoadingSpinner fullScreen message="Loading SkinAid..." />;
+  }
 
   const isRoot = ROOT_PAGES.includes(currentPageName);
   // header is taller on desktop (has nav row) for root pages
