@@ -17,19 +17,19 @@ function getFriendlyAuthError(error) {
   const message = error?.message?.toLowerCase() ?? ''
 
   if (message.includes('invalid login credentials')) {
-    return 'The email or password is incorrect.'
+    return "That email or password doesn't match."
   }
 
   if (message.includes('email not confirmed')) {
-    return 'Confirm your email address before signing in.'
+    return 'Check your email and confirm your address first.'
   }
 
   if (message.includes('already registered')) {
-    return 'An account with this email already exists.'
+    return 'That email already has an account.'
   }
 
   if (message.includes('password')) {
-    return 'Use a password that meets Supabase password requirements.'
+    return 'Use a stronger password.'
   }
 
   return 'We could not complete that request. Please try again.'
@@ -172,20 +172,20 @@ export default function Login() {
     <div className="min-h-screen bg-slate-50 py-10 dark:bg-slate-900">
       <div className="container mx-auto grid max-w-5xl gap-6 px-4 lg:grid-cols-[0.95fr_1.05fr]">
         <div className="rounded-3xl bg-gradient-to-br from-[#1E5EFF] to-[#1CB5A3] p-8 text-white shadow-xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">SkinAid access</p>
-          <h1 className="mt-4 text-4xl font-semibold">Secure sign-in for saved scans and private history</h1>
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">Sign in</p>
+          <h1 className="mt-4 text-4xl font-semibold">Save your checks and come back anytime</h1>
           <p className="mt-4 text-base leading-7 text-white/85">
-            Your account unlocks scan history, private image storage, and protected AI analysis requests routed through Vercel.
+            Your account keeps your past checks private and easy to find.
           </p>
           <div className="mt-8 space-y-3 text-sm text-white/90">
-            <p>Supabase Auth manages your email-based sign-in.</p>
-            <p>Google sign-in can be enabled for one-click Gmail access.</p>
-            <p>Uploaded images are stored in your own path inside the skin-images bucket.</p>
-            <p>AI secrets remain server-side and are never exposed to the browser.</p>
+            <p>Save your past checks.</p>
+            <p>Keep your photos private.</p>
+            <p>Use email or Google to sign in fast.</p>
+            <p>Your account helps keep results just for you.</p>
           </div>
           <div className="mt-10">
             <Link className="text-sm font-medium text-white underline underline-offset-4" to={createPageUrl('Home')}>
-              Return to home
+              Back home
             </Link>
           </div>
         </div>
@@ -225,18 +225,18 @@ export default function Login() {
               </button>
             </div>
             <CardTitle className="text-3xl text-slate-900 dark:text-white">
-              {mode === 'sign-in' ? 'Welcome back' : 'Create your SkinAid account'}
+              {mode === 'sign-in' ? 'Welcome back' : 'Create your account'}
             </CardTitle>
             <CardDescription className="text-base leading-7 text-slate-600 dark:text-slate-300">
               {mode === 'sign-in'
-                ? 'Sign in to run protected skin analyses and view saved results.'
-                : 'Create an account to store scan history in Supabase and protect access with email authentication.'}
+                ? 'Sign in to run a check and see saved results.'
+                : 'Create an account to save checks and pick up where you left off.'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {errorMessage ? (
               <Alert variant="destructive" className="border-red-200 bg-red-50 text-red-700">
-                <AlertTitle>Authentication failed</AlertTitle>
+                <AlertTitle>Sign-in didn't work</AlertTitle>
                 <AlertDescription>{errorMessage}</AlertDescription>
               </Alert>
             ) : null}
@@ -278,7 +278,7 @@ export default function Login() {
 
             <div className="flex items-center gap-3 text-xs uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">
               <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
-              or continue with email
+              or use email
               <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
             </div>
 
@@ -336,10 +336,10 @@ export default function Login() {
             </form>
 
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              By continuing, you agree to use SkinAid for educational screening support only and not as a substitute for professional medical advice.
+              By continuing, you agree to use SkinAid as a guide, not medical advice.
             </p>
             <p className="text-xs text-slate-400 dark:text-slate-500">
-              To enable Google sign-in in production, turn on the Google provider in Supabase Auth and add your login redirect URL.
+              We only use your sign-in to protect your private checks.
             </p>
           </CardContent>
         </Card>

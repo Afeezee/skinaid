@@ -12,33 +12,33 @@ import {
 const features = [
   {
     icon: Eye,
-    title: "Visual Analysis",
-    description: "AI examines colour variations, texture changes, lesions, rashes, and inflammation patterns."
+    title: "Photo Check",
+    description: "Looks for things that stand out in the photo, like color, texture, and spread."
   },
   {
     icon: Brain,
-    title: "Smart Insights",
-    description: "Plain language explanations with severity estimates and confidence levels."
+    title: "Easy-to-read Results",
+    description: "Gives you a simple summary, how serious it may look, and what to do next."
   },
   {
     icon: FileDown,
-    title: "Downloadable Reports",
-    description: "Generate clean PDF reports to share with healthcare professionals."
+    title: "Shareable Summary",
+    description: "Save a clean report to show a doctor or vet."
   },
   {
     icon: History,
-    title: "Analysis History",
-    description: "Optionally save past analyses for tracking and comparison."
+    title: "Past Checks",
+    description: "Keep earlier checks in one place if you want to look back."
   },
   {
     icon: PawPrint,
-    title: "Pet Friendly",
-    description: "Works for both human and pet skin concerns with appropriate guidance."
+    title: "People and Pets",
+    description: "Use it for your skin or your pet's skin."
   },
   {
     icon: ShieldCheck,
-    title: "Ethically Built",
-    description: "Clear disclaimers, no prescriptions, and transparent AI limitations."
+    title: "Built with care",
+    description: "Clear limits, no treatment claims, and honest guidance."
   }
 ];
 
@@ -53,10 +53,10 @@ export default function Features() {
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-            Designed for Peace of Mind
+            Simple help, less stress
           </h2>
           <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-            Thoughtful features that prioritize your wellbeing and privacy
+            Useful tools without the hard-to-read medical talk
           </p>
         </motion.div>
 

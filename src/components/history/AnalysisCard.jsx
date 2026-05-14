@@ -20,7 +20,7 @@ export default function AnalysisCard({ analysis, onDelete, onDownload }) {
         <div className="md:w-48 h-48 md:h-auto bg-slate-100 dark:bg-slate-700 flex-shrink-0">
           <img
             src={analysis.image_url}
-            alt="Skin analysis"
+            alt="Skin check"
             className="w-full h-full object-cover"
           />
         </div>
@@ -49,7 +49,7 @@ export default function AnalysisCard({ analysis, onDelete, onDownload }) {
           {analysis.conditions && analysis.conditions.length > 0 && (
             <div className="mb-4">
               <p className="text-sm font-medium text-slate-900 dark:text-white mb-2">
-                Identified Conditions:
+                Possible matches:
               </p>
               <div className="flex flex-wrap gap-2">
                 {analysis.conditions.slice(0, 3).map((condition, index) => (
@@ -78,7 +78,7 @@ export default function AnalysisCard({ analysis, onDelete, onDownload }) {
               className="text-xs"
             >
               <FileDown className="w-3 h-3 mr-1" />
-              Download
+              Save
             </Button>
             <Button
               size="sm"

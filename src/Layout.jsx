@@ -84,8 +84,8 @@ export default function Layout({ children, currentPageName }) {
                 <span className="text-xl font-bold text-slate-900 dark:text-white">SkinAid</span>
               </Link>
               <p className="text-slate-600 dark:text-slate-400 text-sm max-w-sm">
-                AI-assisted skin screening for awareness and early insight.
-                Privacy-first, ethical AI that empowers you with knowledge.
+                Quick skin checks for everyday peace of mind.
+                Private by design and clear about limits.
               </p>
             </div>
             <div>
@@ -117,7 +117,7 @@ export default function Layout({ children, currentPageName }) {
               </a>
             </div>
             <p className="text-xs text-slate-400 dark:text-slate-500 text-center md:text-right">
-              Not a medical device. Does not provide diagnoses, treatment recommendations, or prescriptions.
+              Guide only. No diagnosis, treatment plans, or prescriptions.
             </p>
           </div>
         </div>

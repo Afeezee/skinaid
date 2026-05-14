@@ -4,10 +4,10 @@ import { Check, Upload, Lock, Scan, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const steps = [
-  { id: "upload", label: "Image received", icon: Upload },
-  { id: "secure", label: "Secure processing", icon: Lock },
-  { id: "analyze", label: "Analysing image", icon: Scan },
-  { id: "generate", label: "Generating insights", icon: FileText }
+  { id: "upload", label: "Photo added", icon: Upload },
+  { id: "secure", label: "Kept private", icon: Lock },
+  { id: "analyze", label: "Checking photo", icon: Scan },
+  { id: "generate", label: "Writing your result", icon: FileText }
 ];
 
 export default function AnalysisProgress({ currentStep, error }) {

@@ -5,23 +5,23 @@ import { Upload, Scan, FileCheck, Stethoscope } from "lucide-react";
 const steps = [
   {
     icon: Upload,
-    title: "Upload Image",
-    description: "Take a clear photo of the skin area you'd like to check and upload it securely."
+    title: "Add a photo",
+    description: "Take a clear photo of the area you want checked."
   },
   {
     icon: Scan,
-    title: "AI Analysis",
-    description: "Our AI examines colour, texture, and patterns to identify potential concerns."
+    title: "Quick check",
+    description: "We look for signs that may need attention."
   },
   {
     icon: FileCheck,
-    title: "Get Insights",
-    description: "Receive educational information about possible conditions and severity."
+    title: "Get your read",
+    description: "You get a simple summary and next-step tips."
   },
   {
     icon: Stethoscope,
-    title: "Seek Care",
-    description: "Use insights to decide if you should consult a healthcare professional."
+    title: "Choose your next step",
+    description: "Use the result to decide whether to get care."
   }
 ];
 
@@ -36,10 +36,10 @@ export default function HowItWorks() {
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-            How SkinAid Works
+            How it works
           </h2>
           <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-            A simple, private process to help you understand your skin better
+            Four quick steps. No fuss.
           </p>
         </motion.div>
 

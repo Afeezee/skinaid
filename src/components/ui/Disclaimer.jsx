@@ -31,11 +31,10 @@ export default function Disclaimer({ variant = "default", className }) {
     >
       <AlertCircle className={cn("w-5 h-5 flex-shrink-0 mt-0.5", style.icon)} />
       <div className={cn("text-sm leading-relaxed", style.text)}>
-        <p className="font-medium mb-1">Important Notice</p>
+        <p className="font-medium mb-1">Heads up</p>
         <p>
-          This is not a medical diagnosis. SkinAid provides educational insights 
-          and risk awareness only. Please consult a qualified healthcare professional 
-          for any skin concerns, especially if symptoms persist or worsen.
+          SkinAid is a guide, not a diagnosis. If something hurts, spreads,
+          lasts, or worries you, talk to a doctor or vet.
         </p>
       </div>
     </div>

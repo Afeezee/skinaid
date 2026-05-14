@@ -78,18 +78,18 @@ function getFriendlyErrorMessage(error) {
   }
 
   if (message.includes("temporarily unavailable") || message.includes("rate-limited") || message.includes("quota")) {
-    return "The AI analysis service is temporarily unavailable. Please try again shortly.";
+    return "The check is busy right now. Please try again in a moment.";
   }
 
   if (message.includes("too large")) {
-    return "The image is too large for the current AI model. Try a smaller or lower-resolution photo.";
+    return "That photo is too large. Try a smaller or lower-quality one.";
   }
 
   if (message.includes("network")) {
     return "A network error interrupted the upload. Check your connection and try again.";
   }
 
-  return "We could not analyse this image. Please try again with a clear photo in JPEG, PNG, or WebP format.";
+  return "We couldn't check that photo. Try again with a clear JPEG, PNG, or WebP image.";
 }
 
 function ResultCard({ result, symptomDetails }) {
@@ -98,27 +98,27 @@ function ResultCard({ result, symptomDetails }) {
       <CardHeader className="space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <p className="text-sm font-medium uppercase tracking-[0.25em] text-[#1E5EFF]">Assessment</p>
+            <p className="text-sm font-medium uppercase tracking-[0.25em] text-[#1E5EFF]">Quick read</p>
             <CardTitle className="mt-3 text-3xl font-semibold text-slate-900 dark:text-white">
-              {result.condition || "No visible concern"}
+              {result.condition || "Nothing clear stood out"}
             </CardTitle>
           </div>
 
           <div className="flex flex-wrap gap-2">
             <Badge className={getConfidenceBadgeClass(result.confidence)}>
-              Confidence: {result.confidence || "low"}
+              How sure: {result.confidence || "low"}
             </Badge>
             <Badge className={getSeverityBadgeClass(result.severity)}>
-              Severity: {result.severity || "none"}
+              How serious: {result.severity || "none"}
             </Badge>
             <Badge className={getUrgencyBadgeClass(result.urgency)}>
-              Urgency: {result.urgency || "routine"}
+              When to act: {result.urgency || "routine"}
             </Badge>
           </div>
         </div>
 
         <CardDescription className="text-base leading-7 text-slate-600 dark:text-slate-300">
-          {result.description || "No description was returned by the AI model."}
+          {result.description || "We couldn't add more detail this time."}
         </CardDescription>
       </CardHeader>
 
@@ -126,7 +126,7 @@ function ResultCard({ result, symptomDetails }) {
         {symptomDetails ? (
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-950">
             <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-              User-reported symptoms
+              Your notes
             </h3>
             <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-200">{symptomDetails}</p>
           </div>
@@ -134,7 +134,7 @@ function ResultCard({ result, symptomDetails }) {
 
         <div>
           <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-            Observed characteristics
+            What stood out
           </h3>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-600 dark:text-slate-300">
             {(result.characteristics ?? []).map((characteristic) => (
@@ -146,7 +146,7 @@ function ResultCard({ result, symptomDetails }) {
         <div className="rounded-2xl border border-[#1CB5A3]/20 bg-[#1CB5A3]/10 p-5">
           <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-[#0f766e]">
             <ShieldCheck className="h-4 w-4" />
-            Advice
+            What to do next
           </div>
           <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-200">{result.advice}</p>
         </div>
@@ -159,7 +159,7 @@ function ResultCard({ result, symptomDetails }) {
             className="bg-[#1E5EFF] text-white hover:bg-[#1a52e0]"
             onClick={() => window.open("https://find-a-derm.aad.org/", "_blank", "noopener,noreferrer")}
           >
-            Seek Professional Help
+            Find a skin doctor
             <ExternalLink className="ml-2 h-4 w-4" />
           </Button>
         ) : null}
@@ -273,10 +273,10 @@ export default function SkinCheck() {
           throw error;
         }
 
-        setSaveNotice("Analysis complete. The result has been saved to your history.");
+        setSaveNotice("Your check is ready and saved in History.");
       } catch (saveError) {
         console.error("Save analysis error:", saveError);
-        setSaveNotice("Analysis complete, but we could not save it to your history.");
+        setSaveNotice("Your check is ready, but we couldn't save it to History.");
       }
     } catch (error) {
       if (uploadedImage?.path && !analysisCompleted) {
@@ -312,19 +312,20 @@ export default function SkinCheck() {
     <div className="min-h-screen bg-slate-50 py-8 dark:bg-slate-900">
       <div className="container mx-auto max-w-5xl px-4">
         <div className="mb-8 max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#1E5EFF]">Protected scan workflow</p>
-          <h1 className="mt-3 text-4xl font-semibold text-slate-900 dark:text-white">AI-assisted skin image screening</h1>
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#1E5EFF]">Private skin check</p>
+          <h1 className="mt-3 text-4xl font-semibold text-slate-900 dark:text-white">Upload a photo. Get a quick read.</h1>
           <p className="mt-4 text-base leading-7 text-slate-600 dark:text-slate-300">
-            Capture a clear skin image, submit it securely for multimodal analysis, and save the result to your private history.
+            Add a clear photo, share extra notes if you want, and get simple next-step guidance.
           </p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <Card className="rounded-3xl border-slate-200 shadow-sm dark:border-slate-800">
             <CardHeader>
-              <CardTitle className="text-2xl text-slate-900 dark:text-white">Upload a skin image</CardTitle>
+              <CardTitle className="text-2xl text-slate-900 dark:text-white">Add a skin photo</CardTitle>
               <CardDescription className="text-base leading-7 text-slate-600 dark:text-slate-300">
-                Use your camera on mobile or choose a file from your device, then optionally add symptom notes for true multimodal analysis. Supported formats: JPEG, PNG, WebP. Maximum size: 10MB.
+                Take a photo or choose one from your device. You can also add notes like itching,
+                pain, or how long it has been there. JPEG, PNG, or WebP up to 10MB.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -335,9 +336,9 @@ export default function SkinCheck() {
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1E5EFF]/10 text-[#1E5EFF]">
                   <UploadCloud className="h-8 w-8" />
                 </div>
-                <p className="mt-4 text-lg font-medium text-slate-900 dark:text-white">Choose an image or open the camera</p>
+                <p className="mt-4 text-lg font-medium text-slate-900 dark:text-white">Choose a photo or use your camera</p>
                 <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                  Mobile devices can open the rear camera directly for faster capture.
+                  On phones, this can open your back camera.
                 </p>
                 <input
                   id="skin-image"
@@ -370,16 +371,17 @@ export default function SkinCheck() {
               <div className="space-y-3">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-                    Optional symptom notes
+                    Extra notes (optional)
                   </p>
                   <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                    Describe pain, itching, swelling, discharge, duration, suspected infection, or any other context you want the model to consider with the image.
+                    Share anything that may help, like itching, pain, swelling, how long it has been there,
+                    or what may have caused it.
                   </p>
                 </div>
                 <Textarea
                   value={symptomDetails}
                   onChange={(event) => setSymptomDetails(event.target.value.slice(0, MAX_SYMPTOM_TEXT_LENGTH))}
-                  placeholder="Example: It has been itchy for 5 days, looks red around the edges, and started after using a new soap."
+                  placeholder="Example: It has been itchy for 5 days, looks red around the edges, and started after a new soap."
                   className="min-h-[132px] resize-y"
                 />
                 <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -395,11 +397,11 @@ export default function SkinCheck() {
                   className="bg-[#1E5EFF] text-white hover:bg-[#1a52e0]"
                 >
                   <Sparkles className="mr-2 h-4 w-4" />
-                  Analyse image
+                  Check photo
                 </Button>
                 <Button type="button" variant="outline" onClick={handleReset} disabled={isAnalyzing}>
                   <RefreshCw className="mr-2 h-4 w-4" />
-                  Reset
+                  Start over
                 </Button>
               </div>
             </CardContent>
@@ -409,21 +411,22 @@ export default function SkinCheck() {
             <CardHeader>
               <CardTitle className="text-2xl text-slate-900 dark:text-white">What happens next</CardTitle>
               <CardDescription className="text-base leading-7 text-slate-600 dark:text-slate-300">
-                Your image is uploaded securely to your storage bucket, its URL and optional symptom notes are sent to a protected serverless function, and the multimodal model returns a structured assessment.
+                We upload your photo safely, send it with your notes for a private check,
+                and return a simple result.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 text-sm leading-6 text-slate-600 dark:text-slate-300">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
-                <p className="font-semibold text-slate-900 dark:text-white">Security</p>
-                <p className="mt-2">All Groq requests are routed through a serverless function so your API key never reaches the browser.</p>
+                <p className="font-semibold text-slate-900 dark:text-white">Private</p>
+                <p className="mt-2">Your check runs behind the scenes, so keys and account details stay protected.</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
-                <p className="font-semibold text-slate-900 dark:text-white">Storage</p>
-                <p className="mt-2">Uploaded images are reused for both multimodal inference and saved history. If analysis fails, SkinAid now cleans up the temporary upload automatically.</p>
+                <p className="font-semibold text-slate-900 dark:text-white">Saved if you choose</p>
+                <p className="mt-2">If you save the check, the photo and result show up in your history. If something fails first, we clean it up.</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
-                <p className="font-semibold text-slate-900 dark:text-white">Medical scope</p>
-                <p className="mt-2">This remains an educational screening tool. It does not provide a diagnosis or replace clinician review.</p>
+                <p className="font-semibold text-slate-900 dark:text-white">Keep this in mind</p>
+                <p className="mt-2">This is a guide, not a diagnosis. If something worries you, talk to a doctor.</p>
               </div>
             </CardContent>
           </Card>
@@ -432,7 +435,7 @@ export default function SkinCheck() {
         {errorMessage ? (
           <Alert variant="destructive" className="mt-6 border-red-200 bg-red-50 text-red-700">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Unable to complete analysis</AlertTitle>
+            <AlertTitle>We couldn't finish your check</AlertTitle>
             <AlertDescription>{errorMessage}</AlertDescription>
           </Alert>
         ) : null}
@@ -440,12 +443,12 @@ export default function SkinCheck() {
         {saveNotice ? (
           <Alert className="mt-6 border-emerald-200 bg-emerald-50 text-emerald-700">
             <ShieldCheck className="h-4 w-4" />
-            <AlertTitle>Analysis finished</AlertTitle>
+            <AlertTitle>Check complete</AlertTitle>
             <AlertDescription>{saveNotice}</AlertDescription>
           </Alert>
         ) : null}
 
-        {isAnalyzing ? <LoadingSpinner message="Analysing your skin image..." /> : null}
+        {isAnalyzing ? <LoadingSpinner message="Checking your photo..." /> : null}
 
         {result ? <div className="mt-6"><ResultCard result={result} symptomDetails={submittedSymptomDetails} /></div> : null}
 

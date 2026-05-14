@@ -26,17 +26,17 @@ export default function Home() {
             className="max-w-3xl mx-auto text-center"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-              Ready to understand your skin better?
+              Ready for a quick skin check?
             </h2>
             <p className="text-xl text-white/80 mb-10">
-              Get AI-assisted insights in minutes. Private, secure, and always educational.
+              Get a clear read in minutes. Private, simple, and easy to use.
             </p>
             <Link to={createPageUrl("SkinCheck")}>
               <Button
                 size="lg"
                 className="bg-white text-[#1E5EFF] hover:bg-white/90 px-8 py-6 text-lg rounded-xl shadow-lg"
               >
-                Start Your Free Skin Check
+                Start Free Check
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>

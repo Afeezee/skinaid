@@ -32,7 +32,7 @@ export default function About() {
             About SkinAid
           </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-2">
-            Understanding our mission and approach to ethical AI
+            What SkinAid is for and how we keep it simple
           </p>
         </div>
 
@@ -52,10 +52,9 @@ export default function About() {
               </h2>
             </div>
             <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-lg">
-              SkinAid is a privacy-first, AI-assisted skin condition screening application 
-              designed to help users understand possible skin abnormalities using image analysis 
-              and expert-level explanations. We provide educational insights and risk awareness 
-              to empower you with knowledge—not to replace professional medical care.
+              SkinAid helps you make sense of skin changes from a photo. It gives you a simple
+              read on what might be going on and whether it may be worth getting checked. It is
+              here to inform you, not replace a doctor or vet.
             </p>
           </motion.section>
 
@@ -72,17 +71,17 @@ export default function About() {
                   <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                  What SkinAid Does
+                  What SkinAid does
                 </h3>
               </div>
               <ul className="space-y-3">
                 {[
-                  "Analyzes visible skin features including color, texture, and patterns",
-                  "Provides educational insights about possible conditions",
-                  "Offers severity estimates and confidence levels",
-                  "Guides you on when to seek professional care",
-                  "Works for both human and pet skin concerns",
-                  "Generates shareable reports for healthcare providers"
+                  "Looks at visible changes in a photo",
+                  "Gives a simple read on what it might be",
+                  "Shows how serious it may look",
+                  "Helps you decide when to get it checked",
+                  "Works for people and pets",
+                  "Creates a report you can share"
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3 text-slate-600 dark:text-slate-400">
                     <CheckCircle className="w-4 h-4 text-emerald-500 mt-1 flex-shrink-0" />
@@ -103,17 +102,17 @@ export default function About() {
                   <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                  What SkinAid Does NOT Do
+                  What it won't do
                 </h3>
               </div>
               <ul className="space-y-3">
                 {[
-                  "Provide medical diagnoses or clinical assessments",
-                  "Prescribe medications or treatments",
-                  "Replace professional medical consultations",
-                  "Claim authority over medical decisions",
-                  "Provide emergency medical advice",
-                  "Store your data without explicit consent"
+                  "Give a diagnosis",
+                  "Prescribe medicine or treatment",
+                  "Replace a doctor or vet",
+                  "Make urgent care decisions for you",
+                  "Help in an emergency",
+                  "Keep data you did not choose to save"
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3 text-slate-600 dark:text-slate-400">
                     <XCircle className="w-4 h-4 text-red-500 mt-1 flex-shrink-0" />
@@ -136,25 +135,25 @@ export default function About() {
                 <Shield className="w-6 h-6 text-[#1E5EFF]" />
               </div>
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                Ethical AI Principles
+                How we keep it fair
               </h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
                 {
                   icon: AlertCircle,
-                  title: "Non-Diagnostic",
-                  desc: "We clearly state that all insights are educational and never claim to provide medical diagnoses."
+                  title: "Clear limits",
+                  desc: "We say upfront that this is guidance only, not a diagnosis."
                 },
                 {
                   icon: Lock,
-                  title: "Privacy-First",
-                  desc: "Your images and data are processed securely. We don't sell or share your personal information."
+                  title: "Private first",
+                  desc: "Your photos and details stay protected. We do not sell your data."
                 },
                 {
                   icon: Heart,
-                  title: "Transparent",
-                  desc: "We openly communicate AI limitations and always recommend professional consultation for concerns."
+                  title: "Plain and honest",
+                  desc: "We keep the wording simple and tell you when it is time to see a professional."
                 }
               ].map((item, i) => (
                 <div key={i} className="text-center">
@@ -180,24 +179,23 @@ export default function About() {
                 <Stethoscope className="w-6 h-6 text-amber-600 dark:text-amber-400" />
               </div>
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                Medical Responsibility Statement
+                When to get medical help
               </h2>
             </div>
             <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-400">
               <p className="leading-relaxed">
-                SkinAid is designed as an educational tool to help users become more aware of 
-                their skin health. The AI analysis provides possible explanations for visible 
-                skin features but should never be used as a substitute for professional medical advice.
+                SkinAid is a simple guide to help you notice what may need attention. If
+                something hurts, changes fast, or worries you, talk to a doctor or vet.
               </p>
               <p className="leading-relaxed mt-4">
-                <strong className="text-slate-900 dark:text-white">Always seek professional medical care if:</strong>
+                <strong className="text-slate-900 dark:text-white">Get medical help if:</strong>
               </p>
               <ul className="mt-2 space-y-2">
-                <li>Your skin condition is painful, spreading, or worsening</li>
-                <li>You notice sudden changes in moles or skin lesions</li>
-                <li>The condition persists for more than two weeks</li>
-                <li>You experience accompanying symptoms like fever or fatigue</li>
-                <li>You have concerns about any skin abnormality</li>
+                <li>It hurts, spreads, or gets worse</li>
+                <li>A mole or spot changes quickly</li>
+                <li>It lasts more than two weeks</li>
+                <li>You also feel unwell</li>
+                <li>Something just does not look right</li>
               </ul>
             </div>
           </motion.section>
@@ -217,7 +215,7 @@ export default function About() {
                 size="lg"
                 className="bg-[#1E5EFF] hover:bg-[#1a52e0] text-white px-8 py-6 text-lg rounded-xl"
               >
-                Start Your Skin Check
+                Start a Check
               </Button>
             </Link>
           </motion.div>

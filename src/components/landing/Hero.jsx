@@ -28,23 +28,23 @@ export default function Hero() {
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-200 dark:border-slate-700 mb-8">
               <Shield className="w-4 h-4 text-[#1CB5A3]" />
               <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                Privacy-First • Ethical AI • Non-Diagnostic
+                Private • Clear • Guide only
               </span>
             </div>
 
             {/* Main heading */}
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-slate-900 dark:text-white leading-tight mb-6">
-              Understand your skin.
+              Spot what matters.
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1E5EFF] to-[#1CB5A3]">
-                Know when to seek help.
+                Know when to get help.
               </span>
             </h1>
 
             {/* Subheading */}
             <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-              AI-assisted skin screening for awareness and early insight. 
-              Get educational insights about your skin in minutes, privately and securely.
+              Snap a photo and get a quick read in minutes.
+              Simple guidance to help you choose your next step.
             </p>
 
             {/* CTA buttons */}
@@ -54,7 +54,7 @@ export default function Hero() {
                   size="lg"
                   className="bg-[#1E5EFF] hover:bg-[#1a52e0] text-white px-8 py-6 text-lg rounded-xl shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/30"
                 >
-                  Start Skin Check
+                  Check My Skin
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
@@ -64,7 +64,7 @@ export default function Hero() {
                   variant="outline"
                   className="px-8 py-6 text-lg rounded-xl border-slate-300 dark:border-slate-600"
                 >
-                  Learn More
+                  See How It Works
                 </Button>
               </Link>
             </div>
@@ -78,9 +78,9 @@ export default function Hero() {
             className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto"
           >
             {[
-              { icon: Shield, title: "Non-Diagnostic", desc: "Educational insights, not medical advice" },
-              { icon: Lock, title: "Privacy-First", desc: "Your data stays yours, always" },
-              { icon: Heart, title: "Ethical AI", desc: "Responsible and transparent" }
+              { icon: Shield, title: "Guide only", desc: "Helpful info, not a diagnosis" },
+              { icon: Lock, title: "Private by design", desc: "Your photos stay in your control" },
+              { icon: Heart, title: "Clear and honest", desc: "Straight answers with clear limits" }
             ].map((item, i) => (
               <div
                 key={i}

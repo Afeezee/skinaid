@@ -26,7 +26,7 @@ export default function ResultsPanel({ results, onDownload }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Analysis Results
+          Your results
         </h2>
         <SeverityBadge severity={severity} size="lg" />
       </div>
@@ -40,7 +40,7 @@ export default function ResultsPanel({ results, onDownload }) {
           <div className="flex items-center gap-2 mb-4">
             <Eye className="w-5 h-5 text-[#1E5EFF]" />
             <h3 className="font-semibold text-slate-900 dark:text-white">
-              Possible Conditions
+              What it could be
             </h3>
           </div>
           <div className="space-y-4">
@@ -58,7 +58,7 @@ export default function ResultsPanel({ results, onDownload }) {
                   </h4>
                   {condition.confidence && (
                     <span className="text-xs text-slate-500 dark:text-slate-400 px-2 py-1 bg-slate-200/50 dark:bg-slate-600/50 rounded">
-                      {Math.round(condition.confidence * 100)}% confidence
+                      {Math.round(condition.confidence * 100)}% match
                     </span>
                   )}
                 </div>
@@ -77,7 +77,7 @@ export default function ResultsPanel({ results, onDownload }) {
           <div className="flex items-center gap-2 mb-4">
             <Lightbulb className="w-5 h-5 text-[#1CB5A3]" />
             <h3 className="font-semibold text-slate-900 dark:text-white">
-              Visual Observations
+              What we noticed
             </h3>
           </div>
           <ul className="space-y-2">
@@ -103,7 +103,7 @@ export default function ResultsPanel({ results, onDownload }) {
           <div className="flex items-center gap-2 mb-4">
             <Stethoscope className="w-5 h-5 text-[#1E5EFF]" />
             <h3 className="font-semibold text-slate-900 dark:text-white">
-              Recommended Next Steps
+              What to do next
             </h3>
           </div>
           <ul className="space-y-3">
@@ -133,7 +133,7 @@ export default function ResultsPanel({ results, onDownload }) {
           className="flex-1"
         >
           <Download className="w-4 h-4 mr-2" />
-          Download Report
+          Download summary
         </Button>
       </div>
     </motion.div>

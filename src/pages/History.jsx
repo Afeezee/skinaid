@@ -68,7 +68,7 @@ export default function History() {
       if (error) {
         console.error("History fetch error:", error);
         setChecks([]);
-        setErrorMessage("We could not load your saved scans. Please try again.");
+        setErrorMessage("We couldn't load your saved checks. Please try again.");
       } else {
         setChecks(data ?? []);
       }
@@ -93,7 +93,7 @@ export default function History() {
 
     if (error) {
       console.error("Delete history error:", error);
-      setErrorMessage("We could not delete that scan. Please try again.");
+      setErrorMessage("We couldn't delete that check. Please try again.");
     } else {
       setChecks((currentChecks) => currentChecks.filter((check) => check.id !== checkToDelete.id));
     }
@@ -109,10 +109,10 @@ export default function History() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">
-                Analysis History
+                Saved Checks
               </h1>
               <p className="text-slate-600 dark:text-slate-400 mt-2">
-                Review and manage your previous SkinAid scans
+                Look back at your past SkinAid checks
               </p>
             </div>
             <div className="hidden sm:flex items-center gap-2 text-sm text-slate-500">
@@ -125,7 +125,7 @@ export default function History() {
         {errorMessage ? (
           <Alert variant="destructive" className="mb-6 border-red-200 bg-red-50 text-red-700">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>History unavailable</AlertTitle>
+            <AlertTitle>Couldn't load history</AlertTitle>
             <AlertDescription>{errorMessage}</AlertDescription>
           </Alert>
         ) : null}
@@ -153,14 +153,14 @@ export default function History() {
               <HistoryIcon className="w-10 h-10 text-slate-300 dark:text-slate-500" />
             </div>
             <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
-              No saved scans yet
+              No saved checks yet
             </h3>
             <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-sm mx-auto">
-              Complete your first AI-assisted skin check and it will appear here automatically.
+              Run your first skin check and it will show up here.
             </p>
             <Link to={createPageUrl("SkinCheck")}>
               <Button className="bg-[#1E5EFF] hover:bg-[#1a52e0] text-white">
-                Start a skin check
+                Start a check
               </Button>
             </Link>
           </div>
@@ -191,10 +191,10 @@ export default function History() {
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <p className="text-sm font-medium uppercase tracking-[0.2em] text-[#1E5EFF]">
-                            Saved result
+                            Saved check
                           </p>
                           <h2 className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-                            {check.result?.condition || "Assessment saved"}
+                            {check.result?.condition || "Check saved"}
                           </h2>
                         </div>
                         <Badge className={getSeverityBadgeClass(check.result?.severity)}>
@@ -207,17 +207,17 @@ export default function History() {
                       </p>
 
                       <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
-                        {check.result?.description || "A saved AI-assisted assessment for later reference."}
+                        {check.result?.description || "A saved result you can look back on."}
                       </p>
                     </div>
 
                     <div className="flex items-center justify-between gap-4 border-t border-slate-200 pt-4 dark:border-slate-800">
                       <div className="flex flex-wrap gap-2">
                         <Badge className="border-slate-200 bg-slate-50 text-slate-700">
-                          Confidence: {check.result?.confidence || "unknown"}
+                          How sure: {check.result?.confidence || "unknown"}
                         </Badge>
                         <Badge className="border-slate-200 bg-slate-50 text-slate-700">
-                          Urgency: {check.result?.urgency || "routine"}
+                          When to act: {check.result?.urgency || "routine"}
                         </Badge>
                       </div>
 
@@ -244,9 +244,9 @@ export default function History() {
         <AlertDialog open={Boolean(checkToDelete)} onOpenChange={(open) => !open && setCheckToDelete(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete saved scan</AlertDialogTitle>
+              <AlertDialogTitle>Delete this saved check?</AlertDialogTitle>
               <AlertDialogDescription>
-                This removes the saved history entry from your account. This action cannot be undone.
+                This will remove the saved check from your account. This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

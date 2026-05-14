@@ -33,7 +33,7 @@ export default function RatingWidget({ onRate, analysisId }) {
         className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl text-center"
       >
         <p className="text-sm text-emerald-700 dark:text-emerald-400 font-medium">
-          Thank you for your feedback!
+          Thanks for the feedback.
         </p>
       </motion.div>
     );
@@ -42,7 +42,7 @@ export default function RatingWidget({ onRate, analysisId }) {
   return (
     <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
       <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-        Was this analysis helpful?
+        Was this useful?
       </p>
       <div className="flex gap-2 mb-3">
         <Button
@@ -83,7 +83,7 @@ export default function RatingWidget({ onRate, analysisId }) {
           className="space-y-2"
         >
           <Textarea
-            placeholder="Optional: Tell us more about your experience..."
+            placeholder="Optional: tell us what helped or what felt off."
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
             className="text-sm resize-none"
@@ -94,7 +94,7 @@ export default function RatingWidget({ onRate, analysisId }) {
             onClick={handleSubmitWithFeedback}
             className="w-full bg-[#1E5EFF] hover:bg-[#1a52e0] text-white"
           >
-            Submit Feedback
+            Send feedback
           </Button>
         </motion.div>
       )}
