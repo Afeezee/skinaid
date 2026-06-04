@@ -75,12 +75,21 @@ To enable it:
 
 1. In Supabase, open Authentication > Providers > Google and enable the provider.
 2. Create Google OAuth credentials in Google Cloud and paste the client ID and client secret into Supabase.
-3. Add your allowed redirect URLs in Supabase and Google Cloud, including your local and deployed login routes.
+3. In Supabase Auth > URL Configuration, add your local and deployed `/login` routes to the redirect allow list.
+4. In Google Cloud, configure the Web application OAuth client with your app origins under Authorized JavaScript origins and your Supabase callback URL under Authorized redirect URIs. Use the callback URL shown on the Supabase Google provider page.
 
-Typical redirect URLs:
+Typical values:
 
-- `http://127.0.0.1:4173/login`
-- `https://your-vercel-domain/login`
+- Supabase redirect URLs:
+	- `http://127.0.0.1:4173/login`
+	- `https://your-vercel-domain/login`
+- Google Authorized JavaScript origins:
+	- `http://127.0.0.1:4173`
+	- `https://your-vercel-domain`
+- Google Authorized redirect URI:
+	- `https://<your-project-ref>.supabase.co/auth/v1/callback`
+
+Do not set your app's `/login` route as a Google Authorized redirect URI. Google should redirect back to Supabase, and Supabase should then redirect to your app.
 
 Once enabled, users can continue with Google and Supabase will return them to the login route before redirecting them back into the app.
 

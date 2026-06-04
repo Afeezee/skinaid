@@ -13,6 +13,54 @@ import { createPageUrl } from '@/utils'
 const OAUTH_PENDING_STORAGE_KEY = 'skinaid-oauth-pending'
 const POST_AUTH_PATH_STORAGE_KEY = 'skinaid-post-auth-path'
 
+function normalizeOAuthParam(value) {
+  if (!value) {
+    return ''
+  }
+
+  let decodedValue = value.replace(/\+/g, ' ')
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const nextValue = decodeURIComponent(decodedValue)
+
+      if (nextValue === decodedValue) {
+        break
+      }
+
+      decodedValue = nextValue
+    } catch {
+      break
+    }
+  }
+
+  return decodedValue
+}
+
+function getOAuthCallbackError(location) {
+  const searchParams = new URLSearchParams(location.search)
+  const hashParams = new URLSearchParams(location.hash.replace(/^#/, ''))
+
+  const rawDescription =
+    searchParams.get('error_description') ??
+    hashParams.get('error_description')
+  const rawCode =
+    searchParams.get('error_code') ??
+    hashParams.get('error_code')
+  const rawType =
+    searchParams.get('error') ??
+    hashParams.get('error')
+
+  if (!rawDescription && !rawCode && !rawType) {
+    return null
+  }
+
+  return {
+    message: normalizeOAuthParam(rawDescription || rawType || ''),
+    code: normalizeOAuthParam(rawCode || ''),
+  }
+}
+
 function getFriendlyAuthError(error) {
   const message = error?.message?.toLowerCase() ?? ''
 
@@ -33,6 +81,16 @@ function getFriendlyAuthError(error) {
   }
 
   return 'We could not complete that request. Please try again.'
+}
+
+function getFriendlyOAuthCallbackError(oauthError) {
+  const message = oauthError?.message?.toLowerCase() ?? ''
+
+  if (message.includes('unable to exchange external code')) {
+    return 'Google sign-in could not be completed. Verify the Google provider settings in Supabase and the Google OAuth client configuration, then try again.'
+  }
+
+  return getFriendlyAuthError({ message: oauthError?.message })
 }
 
 export default function Login() {
@@ -71,6 +129,24 @@ export default function Login() {
       console.error('Profile upsert error:', profileError)
     }
   }
+
+  useEffect(() => {
+    const oauthError = getOAuthCallbackError(location)
+
+    if (!oauthError) {
+      return
+    }
+
+    sessionStorage.removeItem(OAUTH_PENDING_STORAGE_KEY)
+    sessionStorage.removeItem(POST_AUTH_PATH_STORAGE_KEY)
+    setIsGoogleSubmitting(false)
+    setInfoMessage('')
+    setErrorMessage(getFriendlyOAuthCallbackError(oauthError))
+
+    if (location.search || location.hash) {
+      navigate(location.pathname, { replace: true })
+    }
+  }, [location, navigate])
 
   useEffect(() => {
     let ignore = false
