@@ -65,6 +65,8 @@ An exact schema and policy migration is included in [supabase/migrations/2026051
 
 Deploy the app to Vercel and set `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `GROQ_API_KEY` in the project environment settings. Vercel will automatically detect the serverless functions in `api/`.
 
+Client-side routes such as `/login`, `/skin-check`, and `/history` are rewritten to `index.html` through `vercel.json` so React Router can handle OAuth callbacks and direct visits.
+
 ## Google Sign-In
 
 SkinAid now includes a Google sign-in button backed by Supabase OAuth.
